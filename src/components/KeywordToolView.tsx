@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Loader2, Info, Lock, X, List } from 'lucide-react';
+import { Search, Loader2, Info, Lock, X, List, Crown } from 'lucide-react';
 import { generateKeywordData, generateBulkKeywordData } from '../services/geminiService';
 import { useSearchContext } from '../context/SearchContext';
 import { useProMode } from '../context/ProModeContext';
@@ -73,7 +73,7 @@ export function KeywordToolView() {
 
   const renderKeywordList = (list: any[], title: string, description: string, emptyMessage: string) => {
     return (
-      <div className="bg-white dark:bg-[#1a1b20] rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+      <div className="bg-white dark:bg-[#1a1b20] rounded-xl border border-slate-200 dark:border-slate-800 p-6 relative overflow-hidden">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-slate-900 dark:text-white font-bold flex items-center gap-2">
             {title} <Info className="h-4 w-4 text-slate-500" />
@@ -81,7 +81,7 @@ export function KeywordToolView() {
         </div>
         
         {list && list.length > 0 ? (
-          <div className="overflow-x-auto">
+          <div className={`overflow-x-auto transition-all duration-500 ${!isPro ? 'blur-md select-none pointer-events-none opacity-40' : ''}`}>
             <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
               <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-[#2a2b30]/50 border-b border-slate-200 dark:border-slate-800">
                 <tr>
@@ -107,6 +107,26 @@ export function KeywordToolView() {
             <p className="text-slate-900 dark:text-white font-bold mb-4">{keyword}</p>
             <p className="text-slate-500 text-sm mb-6">Essayez de rechercher un terme plus large</p>
             <a href="#" className="text-blue-600 dark:text-blue-500 text-sm hover:underline">Curious about how {title.toLowerCase()} work? Let us explain</a>
+          </div>
+        )}
+
+        {!isPro && list && list.length > 0 && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center p-6 bg-white/10 dark:bg-black/10 backdrop-blur-[2px]">
+            <div className="bg-white dark:bg-[#1a1b20] p-6 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 text-center max-w-xs transform animate-in fade-in zoom-in duration-500">
+              <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Crown className="h-6 w-6 text-amber-500" />
+              </div>
+              <h4 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Résultats Pro Limités</h4>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                Passez à la version <b>Pro</b> pour débloquer tous les mots-clés et analyses détaillées.
+              </p>
+              <button 
+                onClick={() => document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth' })}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 rounded-xl shadow-lg shadow-amber-500/20 transition-all"
+              >
+                Débloquer maintenant
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -224,6 +244,7 @@ export function KeywordToolView() {
                   <th className="px-4 py-3 font-medium">Volume</th>
                   <th className="px-4 py-3 font-medium">Concurrence</th>
                   {isPro && <th className="px-4 py-3 font-medium">CPC</th>}
+                  {isPro && <th className="px-4 py-3 font-medium">Pro Insight</th>}
                   <th className="px-4 py-3 font-medium rounded-tr-lg">Score Global</th>
                 </tr>
               </thead>
@@ -246,6 +267,11 @@ export function KeywordToolView() {
                     {isPro && (
                       <td className="px-4 py-3 text-amber-600 dark:text-amber-500">
                         {item.cpc !== undefined ? `$${Number(item.cpc || 0).toFixed(2)}` : '-'}
+                      </td>
+                    )}
+                    {isPro && (
+                      <td className="px-4 py-3 text-xs italic text-slate-500 dark:text-slate-400 max-w-[200px] truncate">
+                        {item.pro_insight || '-'}
                       </td>
                     )}
                     <td className="px-4 py-3">
@@ -324,18 +350,51 @@ export function KeywordToolView() {
               </div>
             </div>
             
-            {isPro && data.cpc !== undefined && (
-              <div className="bg-white dark:bg-[#1a1b20] rounded-xl border border-amber-200 dark:border-amber-500/30 p-6 flex items-center justify-between">
-                <div>
-                  <p className="text-amber-700 dark:text-amber-500 font-bold mb-1">Pro Data: Estimated CPC</p>
-                  <p className="text-2xl font-bold text-slate-900 dark:text-white">${Number(data.cpc || 0).toFixed(2)}</p>
+            {/* Pro Data Section */}
+            <div className="mt-6">
+              {!isPro ? (
+                <button 
+                  onClick={() => document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="w-full bg-slate-100 dark:bg-[#1a1b20] rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-6 flex items-center justify-between group hover:border-amber-500/50 transition-all"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/20 rounded-full flex items-center justify-center">
+                      <Crown className="h-6 w-6 text-amber-500" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-slate-900 dark:text-white font-bold">Pro Data: Estimated CPC & Trends</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Unlock advanced monetization and trend data</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-bold text-sm">
+                    <Lock className="h-4 w-4" /> Unlock Pro
+                  </div>
+                </button>
+              ) : data.cpc !== undefined ? (
+                <div className="bg-white dark:bg-[#1a1b20] rounded-xl border border-amber-200 dark:border-amber-500/30 p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-amber-700 dark:text-amber-500 font-bold mb-1 flex items-center gap-2">
+                        <Crown className="h-4 w-4" /> Pro Data: Estimated CPC
+                      </p>
+                      <p className="text-2xl font-bold text-slate-900 dark:text-white">${Number(data.cpc || 0).toFixed(2)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-amber-700 dark:text-amber-500 font-bold mb-1">Search Trend</p>
+                      <p className={`text-xl font-bold capitalize ${data.trend === 'Up' ? 'text-emerald-500' : data.trend === 'Down' ? 'text-red-500' : 'text-slate-900 dark:text-white'}`}>
+                        {data.trend}
+                      </p>
+                    </div>
+                  </div>
+                  {data.pro_insight && (
+                    <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">Pro Strategic Insight</p>
+                      <p className="text-sm text-slate-900 dark:text-white italic">"{data.pro_insight}"</p>
+                    </div>
+                  )}
                 </div>
-                <div className="text-right">
-                  <p className="text-amber-700 dark:text-amber-500 font-bold mb-1">Search Trend</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white capitalize">{data.trend}</p>
-                </div>
-              </div>
-            )}
+              ) : null}
+            </div>
           </div>
 
           {/* Right Column: Dynamic Lists */}

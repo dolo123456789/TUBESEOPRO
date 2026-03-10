@@ -31,6 +31,7 @@ export function PricingView() {
       description: 'Pour les créateurs sérieux qui veulent exploser leur croissance.',
       features: [
         'Recherche de mots-clés illimitée',
+        'Données CPC & Tendances Pro',
         'Analyse de trafic approfondie',
         'Audit de chaîne concurrentielle',
         'Simulateur de croissance IA',
@@ -146,23 +147,46 @@ export function PricingView() {
       </div>
 
       {/* Comparison Section */}
-      <div className="bg-white dark:bg-[#1a1b20] rounded-3xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-2">
-          <Star className="h-6 w-6 text-yellow-500" />
-          Pourquoi passer à TubeSEO Pro ?
-        </h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div className="space-y-2">
-            <h4 className="font-bold text-slate-900 dark:text-white">Données en temps réel</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400">Accédez aux tendances actuelles via Google Search, pas des données datant de plusieurs mois.</p>
+      <div className="grid md:grid-cols-2 gap-8">
+        <div className="bg-white dark:bg-[#1a1b20] rounded-3xl border border-slate-200 dark:border-slate-800 p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-8 flex items-center gap-2">
+            <Star className="h-6 w-6 text-yellow-500" />
+            Pourquoi passer à TubeSEO Pro ?
+          </h2>
+          <div className="grid gap-8">
+            <div className="space-y-2">
+              <h4 className="font-bold text-slate-900 dark:text-white">Données en temps réel</h4>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Accédez aux tendances actuelles via Google Search, pas des données datant de plusieurs mois.</p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-bold text-slate-900 dark:text-white">IA de pointe</h4>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Utilisez Gemini 3.1 pour des analyses SEO et des stratégies de croissance ultra-précises.</p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-bold text-slate-900 dark:text-white">Gain de temps massif</h4>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Automatisez votre recherche de mots-clés et votre audit de concurrence en quelques secondes.</p>
+            </div>
           </div>
-          <div className="space-y-2">
-            <h4 className="font-bold text-slate-900 dark:text-white">IA de pointe</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400">Utilisez Gemini 3.1 pour des analyses SEO et des stratégies de croissance ultra-précises.</p>
-          </div>
-          <div className="space-y-2">
-            <h4 className="font-bold text-slate-900 dark:text-white">Gain de temps massif</h4>
-            <p className="text-sm text-slate-600 dark:text-slate-400">Automatisez votre recherche de mots-clés et votre audit de concurrence en quelques secondes.</p>
+        </div>
+
+        <div className="bg-indigo-50 dark:bg-indigo-900/10 rounded-3xl border border-indigo-100 dark:border-indigo-800/50 p-8 shadow-sm">
+          <h2 className="text-2xl font-bold text-indigo-900 dark:text-indigo-100 mb-8 flex items-center gap-2">
+            <Shield className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+            Sécurité & Confidentialité
+          </h2>
+          <div className="grid gap-8">
+            <div className="space-y-2">
+              <h4 className="font-bold text-indigo-900 dark:text-indigo-100">Protection des données</h4>
+              <p className="text-sm text-indigo-700/70 dark:text-indigo-300/70">Vos données de chaîne sont chiffrées de bout en bout. Nous ne partageons jamais vos stratégies avec des tiers.</p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-bold text-indigo-900 dark:text-indigo-100">Conformité RGPD</h4>
+              <p className="text-sm text-indigo-700/70 dark:text-indigo-300/70">Respect total de la vie privée et des régulations européennes sur la protection des données.</p>
+            </div>
+            <div className="space-y-2">
+              <h4 className="font-bold text-indigo-900 dark:text-indigo-100">Paiements Sécurisés</h4>
+              <p className="text-sm text-indigo-700/70 dark:text-indigo-300/70">Transactions gérées par Stripe avec une sécurité de niveau bancaire (PCI DSS Compliant).</p>
+            </div>
           </div>
         </div>
       </div>

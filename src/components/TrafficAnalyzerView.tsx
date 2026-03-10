@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { BarChart3, Loader2, Search, TrendingUp, Users, Clock, Sparkles, Youtube } from 'lucide-react';
+import { BarChart3, Loader2, Search, TrendingUp, Users, Clock, Sparkles, Youtube, Crown } from 'lucide-react';
 import { analyzeTrafficSources, fetchChannelTopVideos, generateGrowthStrategy } from '../services/geminiService';
+import { useProMode } from '../context/ProModeContext';
 
 export function TrafficAnalyzerView() {
+  const { isPro } = useProMode();
   const [channelName, setChannelName] = useState('');
   const [analysis, setAnalysis] = useState<any>(null);
   const [topVideos, setTopVideos] = useState<any[]>([]);
@@ -189,27 +191,50 @@ export function TrafficAnalyzerView() {
 
           {/* Magic Strategy */}
           {strategy && (
-            <div className="bg-gradient-to-br from-indigo-600 to-purple-700 p-6 rounded-2xl border border-indigo-500 shadow-lg md:col-span-2 text-white">
-              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                <Sparkles className="h-6 w-6 text-yellow-300" />
-                Stratégie "Magique" de Croissance
-              </h2>
-              <p className="text-indigo-100 mb-6">{strategy.strategy_summary}</p>
-              
-              <div className="grid md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="font-semibold mb-3">Plan de contenu (30 jours)</h3>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-indigo-100">
-                    {strategy.content_plan?.map((p: string, i: number) => <li key={i}>{p}</li>)}
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-3">Tactiques non conventionnelles</h3>
-                  <ul className="list-disc list-inside space-y-1 text-sm text-indigo-100">
-                    {strategy.unconventional_tactics?.map((t: string, i: number) => <li key={i}>{t}</li>)}
-                  </ul>
+            <div className="relative overflow-hidden rounded-2xl md:col-span-2">
+              <div className={`bg-gradient-to-br from-indigo-600 to-purple-700 p-6 border border-indigo-500 shadow-lg text-white transition-all duration-700 ${!isPro ? 'blur-xl opacity-40 select-none pointer-events-none' : ''}`}>
+                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                  <Sparkles className="h-6 w-6 text-yellow-300" />
+                  Stratégie "Magique" de Croissance
+                </h2>
+                <p className="text-indigo-100 mb-6">{strategy.strategy_summary}</p>
+                
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="font-semibold mb-3">Plan de contenu (30 jours)</h3>
+                    <ul className="list-disc list-inside space-y-1 text-sm text-indigo-100">
+                      {strategy.content_plan?.map((p: string, i: number) => <li key={i}>{p}</li>)}
+                    </ul>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-3">Tactiques non conventionnelles</h3>
+                    <ul className="list-disc list-inside space-y-1 text-sm text-indigo-100">
+                      {strategy.unconventional_tactics?.map((t: string, i: number) => <li key={i}>{t}</li>)}
+                    </ul>
+                  </div>
                 </div>
               </div>
+
+              {!isPro && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 bg-black/20 backdrop-blur-[2px]">
+                  <div className="bg-white dark:bg-[#1a1b20] p-8 rounded-3xl shadow-2xl border border-white/10 text-center max-w-md transform animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="w-16 h-16 bg-gradient-to-tr from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3 shadow-lg">
+                      <Crown className="h-8 w-8 text-white" />
+                    </div>
+                    <h4 className="text-2xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">DÉBLOQUEZ LA MAGIE</h4>
+                    <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                      Notre IA de pointe a généré une stratégie personnalisée pour <b>{channelName}</b>. 
+                      Passez au mode Pro pour voir le plan complet de 30 jours.
+                    </p>
+                    <button 
+                      onClick={() => document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth' })}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-indigo-500/30 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      PASSER À PRO MAINTENANT
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

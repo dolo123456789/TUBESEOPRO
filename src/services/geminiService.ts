@@ -1,6 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
 const apiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : (import.meta as any).env?.VITE_GEMINI_API_KEY;
+
+if (!apiKey) {
+  console.warn('GEMINI_API_KEY is missing. AI features will not work.');
+}
+
 const ai = new GoogleGenAI({ apiKey: apiKey || '' });
 
 // Cache configuration
@@ -44,6 +49,16 @@ function clearOldCache() {
       }
     }
   } catch (e) {}
+}
+
+function generateHash(str: string) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(36);
 }
 
 function safeJsonParse(text: string | undefined, fallback: any) {
@@ -95,30 +110,82 @@ function safeJsonParse(text: string | undefined, fallback: any) {
   }
 }
 
+export async function generateThumbnail(prompt: string, referenceImage?: string) {
+  if (!apiKey) {
+    throw new Error('API Key is missing. Please configure GEMINI_API_KEY.');
+  }
+
+  try {
+    const parts: any[] = [
+      {
+        text: `Generate a professional, high-quality, high-contrast YouTube thumbnail. It should be eye-catching and designed for high CTR. Style: Modern, vibrant, clean. Prompt: ${prompt}`,
+      },
+    ];
+
+    if (referenceImage) {
+      // Extract mime type and base64 data
+      const matches = referenceImage.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
+      if (matches && matches.length === 3) {
+        parts.unshift({
+          inlineData: {
+            mimeType: matches[1],
+            data: matches[2],
+          },
+        });
+      }
+    }
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: {
+        parts: parts,
+      },
+      config: {
+        imageConfig: {
+          aspectRatio: "16:9",
+          imageSize: "1K"
+        }
+      }
+    });
+
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData) {
+        return `data:image/png;base64,${part.inlineData.data}`;
+      }
+    }
+    throw new Error('No image generated');
+  } catch (error) {
+    console.error("Error in generateThumbnail:", error);
+    throw error;
+  }
+}
 export async function generateKeywordData(keyword: string, isPro: boolean = false) {
   const cacheKey = `keyword_${keyword}_${isPro}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
-  const proPrompt = isPro ? "Also provide CPC (Cost Per Click) estimate and a search trend (Up, Down, Stable)." : "";
+  const proPrompt = isPro ? "En tant que fonctionnalité PRO, fournissez une estimation très précise du CPC (Coût par Clic) en USD, une tendance de recherche détaillée (En hausse, En baisse, Stable), et un 'pro_insight' qui est un conseil stratégique d'une phrase pour ce mot-clé." : "";
   const proProperties = isPro ? {
-    cpc: { type: Type.NUMBER, description: "Estimated CPC in USD" },
-    trend: { type: Type.STRING, description: "Up, Down, or Stable" }
+    cpc: { type: Type.NUMBER, description: "Estimation du CPC en USD" },
+    trend: { type: Type.STRING, description: "En hausse, En baisse, ou Stable" },
+    pro_insight: { type: Type.STRING, description: "Un conseil stratégique d'une phrase pour ce mot-clé" }
   } : {};
-  const proRequired = isPro ? ["cpc", "trend"] : [];
+  const proRequired = isPro ? ["cpc", "trend", "pro_insight"] : [];
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Act as a YouTube SEO expert tool like vidIQ. Analyze the keyword: "${keyword}". Provide realistic estimated data for search volume, competition level, and an overall SEO score (0-100).
-    YOU MUST USE REAL, EXISTING YOUTUBE DATA. Use Google Search to find real channels and videos ranking for this keyword.
+    contents: `Agissez comme un outil d'expert en SEO YouTube comme vidIQ. Analysez le mot-clé : "${keyword}". Fournissez des données estimées réalistes pour le volume de recherche, le niveau de concurrence et un score SEO global (0-100).
+    VOUS DEVEZ UTILISER DES DONNÉES RÉELLES DE YOUTUBE. Utilisez Google Search pour trouver de vraies chaînes et vidéos classées pour ce mot-clé.
     
-    Also provide lists for:
-    1. Related keywords (Mots clés associés)
-    2. Matching terms (Termes correspondants - keywords containing the exact phrase)
-    3. Questions (Des questions - questions containing the keyword)
+    Fournissez également des listes pour :
+    1. Mots-clés associés (Related keywords)
+    2. Termes correspondants (Matching terms - mots-clés contenant la phrase exacte)
+    3. Questions (Des questions - questions contenant le mot-clé)
     
-    If the keyword is very long or obscure, you can return empty arrays for the lists to simulate a "not found" state.
-    ${proPrompt}`,
+    Si le mot-clé est très long ou obscur, vous pouvez renvoyer des tableaux vides pour les listes afin de simuler un état "non trouvé".
+    ${proPrompt}
+    
+    RÉPONDEZ TOUJOURS EN FRANÇAIS.`,
     config: {
       tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
@@ -184,19 +251,22 @@ export async function generateBulkKeywordData(keywords: string[], isPro: boolean
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
-  const proPrompt = isPro ? "Also provide CPC (Cost Per Click) estimate and a search trend (Up, Down, Stable)." : "";
+  const proPrompt = isPro ? "En tant que fonctionnalité PRO, fournissez une estimation très précise du CPC (Coût par Clic) en USD, une tendance de recherche détaillée (En hausse, En baisse, Stable), et un 'pro_insight' qui est un conseil stratégique d'une phrase pour ce mot-clé." : "";
   const proProperties = isPro ? {
-    cpc: { type: Type.NUMBER, description: "Estimated CPC in USD" },
-    trend: { type: Type.STRING, description: "Up, Down, or Stable" }
+    cpc: { type: Type.NUMBER, description: "Estimation du CPC en USD" },
+    trend: { type: Type.STRING, description: "En hausse, En baisse, ou Stable" },
+    pro_insight: { type: Type.STRING, description: "Un conseil stratégique d'une phrase pour ce mot-clé" }
   } : {};
-  const proRequired = isPro ? ["cpc", "trend"] : [];
+  const proRequired = isPro ? ["cpc", "trend", "pro_insight"] : [];
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Act as a YouTube SEO expert tool like vidIQ. Analyze the following list of keywords: ${JSON.stringify(keywords)}. 
-    YOU MUST USE REAL, EXISTING YOUTUBE DATA. Use Google Search to find real trends and data for these keywords.
-    For each keyword, provide realistic estimated data for search volume, competition level, and an overall SEO score (0-100).
-    ${proPrompt}`,
+    contents: `Agissez comme un outil d'expert en SEO YouTube comme vidIQ. Analysez la liste de mots-clés suivante : ${JSON.stringify(keywords)}. 
+    VOUS DEVEZ UTILISER DES DONNÉES RÉELLES DE YOUTUBE. Utilisez Google Search pour trouver de réelles tendances et données pour ces mots-clés.
+    Pour chaque mot-clé, fournissez des données estimées réalistes pour le volume de recherche, le niveau de concurrence et un score SEO global (0-100).
+    ${proPrompt}
+    
+    RÉPONDEZ TOUJOURS EN FRANÇAIS.`,
     config: {
       tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
@@ -226,68 +296,91 @@ export async function generateBulkKeywordData(keywords: string[], isPro: boolean
 }
 
 export async function analyzeVideoSEO(title: string, description: string, tags: string, isPro: boolean = false) {
-  const cacheKey = `seo_${btoa(title + description + tags)}_${isPro}`;
+  // Truncate inputs to prevent prompt injection or token limit issues
+  const safeTitle = title.slice(0, 200);
+  const safeDescription = description.slice(0, 3000);
+  const safeTags = tags.slice(0, 500);
+
+  const hash = generateHash(safeTitle + safeDescription + safeTags);
+  const cacheKey = `seo_${hash}_${isPro}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
-  const proPrompt = isPro ? "Also provide 3 A/B testing title variations that are highly clickable and optimized." : "";
-  const proProperties = isPro ? {
-    ab_test_titles: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING },
-      description: "3 highly clickable title variations for A/B testing"
-    }
-  } : {};
-  const proRequired = isPro ? ["ab_test_titles"] : [];
+  if (!apiKey) {
+    throw new Error('API Key is missing. Please configure GEMINI_API_KEY.');
+  }
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Act as a YouTube SEO expert tool. Analyze the following video metadata and provide an SEO score (0-100), actionable recommendations, and a highly optimized version of the metadata that would score 95+. ${proPrompt}
-    Title: "${title}"
-    Description: "${description}"
-    Tags: "${tags}"
-    
-    Calculate a score based on:
-    - Title keyword optimization (25%)
-    - Description length and keywords (20%)
-    - Tags relevance and count (20%)
-    - Estimated engagement potential (20%)
-    - Keyword volume potential (15%)
-    `,
-    config: {
-      responseMimeType: "application/json",
-      responseSchema: {
-        type: Type.OBJECT,
-        properties: {
-          seo_score: { type: Type.NUMBER, description: "Overall SEO score 0-100" },
-          title_score: { type: Type.NUMBER, description: "Score for title 0-100" },
-          description_score: { type: Type.NUMBER, description: "Score for description 0-100" },
-          tags_score: { type: Type.NUMBER, description: "Score for tags 0-100" },
-          recommendations: {
-            type: Type.ARRAY,
-            items: { type: Type.STRING },
-            description: "List of 3-5 actionable recommendations to improve SEO"
-          },
-          viral_potential: { type: Type.NUMBER, description: "Estimated viral potential 0-100 based on CTR and engagement factors" },
-          optimized_metadata: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING, description: "A highly optimized, click-worthy title" },
-              description: { type: Type.STRING, description: "A highly optimized description with keywords and structure" },
-              tags: { type: Type.STRING, description: "A comma-separated list of highly optimized tags" }
+  try {
+    const proPrompt = isPro ? "Fournissez également 3 variations de titre pour l'A/B testing qui sont hautement cliquables et optimisées, une estimation très précise du CPC (Coût par Clic) en USD, et une tendance de recherche détaillée (En hausse, En baisse, Stable)." : "";
+    const proProperties = isPro ? {
+      ab_test_titles: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description: "3 highly clickable title variations for A/B testing"
+      },
+      cpc: { type: Type.NUMBER, description: "Estimated CPC in USD" },
+      trend: { type: Type.STRING, description: "Up, Down, or Stable" }
+    } : {};
+    const proRequired = isPro ? ["ab_test_titles", "cpc", "trend"] : [];
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Agissez en tant qu'expert en SEO YouTube. Analysez les métadonnées vidéo suivantes et fournissez un score SEO (0-100), des recommandations exploitables EN FRANÇAIS, et une version hautement optimisée des métadonnées qui obtiendrait un score de 95+ EN FRANÇAIS. ${proPrompt}
+      
+      TITRE: ${safeTitle}
+      DESCRIPTION: ${safeDescription}
+      TAGS: ${safeTags}
+      
+      Calculez un score basé sur :
+      - Optimisation des mots-clés du titre (25%)
+      - Longueur de la description et mots-clés (20%)
+      - Pertinence et nombre de tags (20%)
+      - Potentiel d'engagement estimé (20%)
+      - Potentiel de volume de mots-clés (15%)
+
+      Fournissez également un 'thumbnail_prompt' : une description détaillée pour un générateur d'images IA afin de créer une miniature YouTube professionnelle, à fort contraste et très cliquable pour cette vidéo.
+      
+      TOUTES LES RECOMMANDATIONS ET LES TEXTES GÉNÉRÉS DOIVENT ÊTRE EN FRANÇAIS.
+      `,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            seo_score: { type: Type.NUMBER, description: "Overall SEO score 0-100" },
+            title_score: { type: Type.NUMBER, description: "Score for title 0-100" },
+            description_score: { type: Type.NUMBER, description: "Score for description 0-100" },
+            tags_score: { type: Type.NUMBER, description: "Score for tags 0-100" },
+            recommendations: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: "List of 3-5 actionable recommendations to improve SEO"
             },
-            required: ["title", "description", "tags"]
+            viral_potential: { type: Type.NUMBER, description: "Estimated viral potential 0-100 based on CTR and engagement factors" },
+            thumbnail_prompt: { type: Type.STRING, description: "Detailed prompt for generating a thumbnail" },
+            optimized_metadata: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING, description: "A highly optimized, click-worthy title" },
+                description: { type: Type.STRING, description: "A highly optimized description with keywords and structure" },
+                tags: { type: Type.STRING, description: "A comma-separated list of highly optimized tags" }
+              },
+              required: ["title", "description", "tags"]
+            },
+            ...proProperties
           },
-          ...proProperties
-        },
-        required: ["seo_score", "title_score", "description_score", "tags_score", "recommendations", "viral_potential", "optimized_metadata", ...proRequired]
+          required: ["seo_score", "title_score", "description_score", "tags_score", "recommendations", "viral_potential", "thumbnail_prompt", "optimized_metadata", ...proRequired]
+        }
       }
-    }
-  });
+    });
 
-  const result = safeJsonParse(response.text, {});
-  if (result && Object.keys(result).length > 0) setCache(cacheKey, result);
-  return result;
+    const result = safeJsonParse(response.text, {});
+    if (result && Object.keys(result).length > 0) setCache(cacheKey, result);
+    return result;
+  } catch (error) {
+    console.error("Error in analyzeVideoSEO:", error);
+    throw error;
+  }
 }
 
 export async function generateTags(topic: string) {
@@ -309,34 +402,41 @@ export async function generateTags(topic: string) {
 }
 
 export async function analyzeCompetitorChannel(channelName: string) {
-  const cacheKey = `competitor_v2_${channelName}`;
+  const cacheKey = `competitor_v3_${channelName}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
+    model: "gemini-3.1-pro-preview",
     contents: `Act as a YouTube strategist. Analyze the real YouTube channel "${channelName}".
-    YOU MUST USE REAL, EXISTING YOUTUBE DATA. Use Google Search to find the actual channel stats, recent videos, and performance. 
-    DO NOT HALLUCINATE DATA. If the channel does not exist, try to find the closest real match or return an error-like response.
+    
+    CRITICAL INSTRUCTION: YOU MUST USE REAL, CURRENT YOUTUBE DATA. 
+    1. Use Google Search to find the EXACT channel "${channelName}".
+    2. If there are multiple channels with similar names, identify the most relevant one but BE PRECISE about its stats.
+    3. DO NOT HALLUCINATE OR GUESS. If you find a channel with 150 subscribers, DO NOT report 215k.
+    4. Cross-reference multiple search results to verify subscriber counts and view counts.
+    5. Provide the exact subscriber count as shown on YouTube.
     
     Provide the response in FRENCH.
     
     Provide:
-    1. Estimated subscribers (number)
-    2. Average views per video (number)
-    3. Upload frequency (string, e.g., "2 vidéos/semaine")
-    4. Estimated Engagement Rate (percentage, e.g., "4.2%")
-    5. Estimated Monthly Revenue Range (string, e.g., "500€ - 2500€")
-    6. Top 5 keywords they actually rank for
-    7. Their 3 main strengths (what makes them successful based on their real content)
-    8. 3-5 actionable recommendations for me to improve my own channel by learning from them.
-    9. The exact YouTube channel URL (channel_url). VERIFY THIS URL WORKS. It should be in the format https://www.youtube.com/@handle or https://www.youtube.com/channel/ID.`,
+    1. The EXACT name of the channel you found (real_channel_name)
+    2. Exact or highly accurate subscriber count (number)
+    3. Average views per video based on the last 10 videos (number)
+    4. Upload frequency (string, e.g., "2 vidéos/semaine")
+    5. Estimated Engagement Rate (percentage, e.g., "4.2%")
+    6. Estimated Monthly Revenue Range (string, e.g., "500€ - 2500€")
+    7. Top 5 keywords they actually rank for
+    8. Their 3 main strengths
+    9. 3-5 actionable recommendations
+    10. The exact YouTube channel URL (channel_url). VERIFY THIS URL.`,
     config: {
       tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
         properties: {
+          real_channel_name: { type: Type.STRING, description: "The exact name of the channel found" },
           estimated_subscribers: { type: Type.NUMBER },
           avg_views_per_video: { type: Type.NUMBER },
           upload_frequency: { type: Type.STRING },
@@ -347,7 +447,7 @@ export async function analyzeCompetitorChannel(channelName: string) {
           recommendations: { type: Type.ARRAY, items: { type: Type.STRING } },
           channel_url: { type: Type.STRING, description: "The verified working URL of the YouTube channel" }
         },
-        required: ["estimated_subscribers", "avg_views_per_video", "upload_frequency", "engagement_rate", "estimated_monthly_revenue", "top_keywords", "strengths", "recommendations", "channel_url"]
+        required: ["real_channel_name", "estimated_subscribers", "avg_views_per_video", "upload_frequency", "engagement_rate", "estimated_monthly_revenue", "top_keywords", "strengths", "recommendations", "channel_url"]
       }
     }
   });

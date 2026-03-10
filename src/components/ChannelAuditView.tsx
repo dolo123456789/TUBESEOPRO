@@ -309,10 +309,15 @@ export function ChannelAuditView() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="bg-[#1a1b20] rounded-2xl border border-slate-800 w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl">
             <div className="flex items-center justify-between p-6 border-b border-slate-800">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Users className="h-6 w-6 text-blue-500" />
-                Analyse de la chaîne : {selectedChannel}
-              </h2>
+              <div className="flex flex-col">
+                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                  <Users className="h-6 w-6 text-blue-500" />
+                  Analyse de la chaîne : {channelDetails?.real_channel_name || selectedChannel}
+                </h2>
+                {channelDetails?.real_channel_name && channelDetails.real_channel_name !== selectedChannel && (
+                  <p className="text-xs text-slate-500 ml-8">Résultat le plus pertinent trouvé pour "{selectedChannel}"</p>
+                )}
+              </div>
               {channelDetails && (
                 <a 
                   href={channelDetails.channel_url} 

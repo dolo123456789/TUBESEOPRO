@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Video, Loader2, CheckCircle2, AlertCircle, TrendingUp, Copy, Sparkles, Crown } from 'lucide-react';
-import { analyzeVideoSEO } from '../services/geminiService';
+import { Video, Loader2, CheckCircle2, AlertCircle, TrendingUp, Copy, Sparkles, Crown, Image as ImageIcon, Wand2, X } from 'lucide-react';
+import { analyzeVideoSEO, generateThumbnail } from '../services/geminiService';
 import { useProMode } from '../context/ProModeContext';
 
 export function VideoAnalyzerView() {
@@ -8,7 +8,10 @@ export function VideoAnalyzerView() {
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
   const [data, setData] = useState<any>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const { isPro } = useProMode();
@@ -25,13 +28,49 @@ export function VideoAnalyzerView() {
 
     setIsLoading(true);
     setError('');
+    setData(null);
+    setThumbnailUrl(null);
     try {
       const result = await analyzeVideoSEO(title, description, tags, isPro);
+      if (!result || Object.keys(result).length === 0) {
+        throw new Error('No data returned from analysis.');
+      }
       setData(result);
     } catch (err) {
-      setError('Failed to analyze video. Please try again.');
+      console.error('Analysis error:', err);
+      setError('Failed to analyze video. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGenerateThumbnail = async () => {
+    if (!data?.thumbnail_prompt) return;
+    
+    setIsGeneratingThumbnail(true);
+    try {
+      const url = await generateThumbnail(data.thumbnail_prompt, referenceImage || undefined);
+      setThumbnailUrl(url);
+    } catch (err) {
+      console.error('Thumbnail generation error:', err);
+      setError('Failed to generate thumbnail. Please try again.');
+    } finally {
+      setIsGeneratingThumbnail(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setError('Image size should be less than 5MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReferenceImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -185,6 +224,109 @@ export function VideoAnalyzerView() {
                 <div className="h-2 w-full bg-slate-100 dark:bg-[#0f1115] rounded-full overflow-hidden">
                   <div className="h-full bg-emerald-500" style={{ width: `${data.viral_potential}%` }}></div>
                 </div>
+              </div>
+            </div>
+
+            {/* Pro Data: CPC & Trends */}
+            {isPro && data.cpc !== undefined && (
+              <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/10 p-6 shadow-sm flex items-center justify-between">
+                <div>
+                  <p className="text-amber-700 dark:text-amber-500 font-bold mb-1 flex items-center gap-2">
+                    <Crown className="h-4 w-4" /> Pro: Estimated CPC
+                  </p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white">${Number(data.cpc || 0).toFixed(2)}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-amber-700 dark:text-amber-500 font-bold mb-1">Search Trend</p>
+                  <p className={`text-xl font-bold capitalize ${data.trend === 'Up' ? 'text-emerald-500' : data.trend === 'Down' ? 'text-red-500' : 'text-slate-900 dark:text-white'}`}>
+                    {data.trend}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Thumbnail Generation Section */}
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                  <ImageIcon className="h-5 w-5 text-indigo-500" />
+                  Thumbnail Strategy
+                </h3>
+                <button
+                  onClick={handleGenerateThumbnail}
+                  disabled={isGeneratingThumbnail}
+                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                >
+                  {isGeneratingThumbnail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                  {thumbnailUrl ? 'Regenerate' : 'Generate Thumbnail'}
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                {/* Reference Image Upload */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Reference Image (Optional)</p>
+                  <div className="flex items-center gap-4">
+                    <label className="flex-1 flex flex-col items-center justify-center h-24 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl hover:border-indigo-500/50 transition-colors cursor-pointer bg-slate-50/50 dark:bg-[#0f1115]/50 overflow-hidden relative">
+                      {referenceImage ? (
+                        <>
+                          <img src={referenceImage} alt="Reference" className="w-full h-full object-cover opacity-50" />
+                          <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-white/80 dark:bg-black/80 px-2 py-1 rounded">
+                            Change Image
+                          </div>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center gap-1 text-slate-500">
+                          <ImageIcon className="h-6 w-6" />
+                          <span className="text-[10px] font-medium">Upload Reference</span>
+                        </div>
+                      )}
+                      <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                    </label>
+                    {referenceImage && (
+                      <button 
+                        onClick={() => setReferenceImage(null)}
+                        className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                        title="Remove reference image"
+                      >
+                        <X className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-slate-50 dark:bg-[#0f1115] rounded-lg p-4 border border-slate-100 dark:border-slate-800">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Thumbnail Concept</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300 italic">"{data.thumbnail_prompt}"</p>
+                </div>
+
+                {thumbnailUrl && (
+                  <div className="space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Generated Result</p>
+                    <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-indigo-500 shadow-xl group">
+                      <img src={thumbnailUrl} alt="Generated Thumbnail" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                        <button 
+                          onClick={() => window.open(thumbnailUrl, '_blank')}
+                          className="bg-white text-slate-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-slate-100 transition-colors"
+                        >
+                          Full Preview
+                        </button>
+                        <button 
+                          onClick={() => {
+                            const link = document.createElement('a');
+                            link.href = thumbnailUrl;
+                            link.download = `thumbnail-${Date.now()}.png`;
+                            link.click();
+                          }}
+                          className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-indigo-500 transition-colors"
+                        >
+                          Download
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
