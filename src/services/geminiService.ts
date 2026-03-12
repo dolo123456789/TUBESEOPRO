@@ -118,11 +118,15 @@ export async function generateThumbnail(prompt: string, referenceImage?: string)
   try {
     const parts: any[] = [
       {
-        text: `Generate a professional, high-quality, high-contrast YouTube thumbnail. It should be eye-catching and designed for high CTR. Style: Modern, vibrant, clean. Prompt: ${prompt}`,
+        text: `Generate a professional, high-quality, high-contrast YouTube thumbnail. It should be eye-catching and designed for high CTR. Style: Modern, vibrant, clean. 
+        
+CRITICAL INSTRUCTION FOR TEXT: If the prompt asks for text on the image, you MUST spell it EXACTLY as requested. Pay extreme attention to spelling. DO NOT add extra letters, typos, or gibberish. Keep the text large, bold, and perfectly legible.
+
+Prompt: ${prompt}`,
       },
     ];
 
-    if (referenceImage) {
+  if (referenceImage) {
       // Extract mime type and base64 data
       const matches = referenceImage.match(/^data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+);base64,(.+)$/);
       if (matches && matches.length === 3) {
@@ -135,25 +139,66 @@ export async function generateThumbnail(prompt: string, referenceImage?: string)
       }
     }
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image',
-      contents: {
-        parts: parts,
-      },
-      config: {
-        imageConfig: {
-          aspectRatio: "16:9",
-          imageSize: "1K"
+    const generateWithRetry = async (model: string, config: any, parts: any[]) => {
+      let retries = 3;
+      let delay = 2000;
+      while (retries > 0) {
+        try {
+          return await ai.models.generateContent({
+            model,
+            contents: { parts },
+            config
+          });
+        } catch (err: any) {
+          if ((err.status === 429 || err.message?.includes('429')) && retries > 1) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2;
+            retries--;
+            continue;
+          }
+          throw err;
         }
       }
-    });
+    };
 
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
+    // Generate 16:9 thumbnail
+    const response169 = await generateWithRetry('gemini-2.5-flash-image', {
+      imageConfig: {
+        aspectRatio: "16:9",
+        imageSize: "1K"
+      }
+    }, parts);
+
+    // Generate 9:16 thumbnail
+    const response916 = await generateWithRetry('gemini-2.5-flash-image', {
+      imageConfig: {
+        aspectRatio: "9:16",
+        imageSize: "1K"
+      }
+    }, parts);
+
+    let horizontal = '';
+    let vertical = '';
+
+    for (const part of response169.candidates?.[0]?.content?.parts || []) {
       if (part.inlineData) {
-        return `data:image/png;base64,${part.inlineData.data}`;
+        horizontal = `data:image/png;base64,${part.inlineData.data}`;
+        break;
       }
     }
-    throw new Error('No image generated');
+
+    for (const part of response916.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData) {
+        vertical = `data:image/png;base64,${part.inlineData.data}`;
+        break;
+      }
+    }
+
+    if (!horizontal || !vertical) {
+      throw new Error('Failed to generate both images');
+    }
+
+    return { horizontal, vertical };
   } catch (error) {
     console.error("Error in generateThumbnail:", error);
     throw error;
@@ -339,6 +384,7 @@ export async function analyzeVideoSEO(title: string, description: string, tags: 
       - Potentiel de volume de mots-clés (15%)
 
       Fournissez également un 'thumbnail_prompt' : une description détaillée pour un générateur d'images IA afin de créer une miniature YouTube professionnelle, à fort contraste et très cliquable pour cette vidéo.
+      TRÈS IMPORTANT POUR LE THUMBNAIL_PROMPT : S'il y a du texte sur la miniature, il doit être TRÈS COURT (1 à 3 mots maximum). Vous devez insister dans le prompt pour que le générateur d'images orthographie ce texte PARFAITEMENT, SANS AUCUNE FAUTE.
       
       TOUTES LES RECOMMANDATIONS ET LES TEXTES GÉNÉRÉS DOIVENT ÊTRE EN FRANÇAIS.
       `,
@@ -592,29 +638,39 @@ export async function fetchTrendingVideos(query: string) {
 }
 
 export async function analyzeTrafficSources(channelName: string) {
-  const cacheKey = `traffic_${channelName}`;
+  const cacheKey = `traffic_v2_${channelName}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Act as a YouTube growth strategist. Analyze the traffic sources for the SPECIFIC YouTube channel: "${channelName}".
-    YOU MUST USE REAL, EXISTING YOUTUBE DATA FOR THIS SPECIFIC CHANNEL ONLY. Use Google Search to find actual traffic patterns, audience demographics, and engagement sources for "${channelName}".
-    DO NOT provide generic data or data for other channels.
+    model: "gemini-3.1-pro-preview",
+    contents: `Agissez comme un analyste de données YouTube expert (type SocialBlade / vidIQ). Analysez la chaîne YouTube SPÉCIFIQUE : "${channelName}".
+    VOUS DEVEZ UTILISER DES DONNÉES RÉELLES ET VÉRIDIQUES. Utilisez Google Search pour trouver les statistiques publiques réelles de "${channelName}" (vues mensuelles, abonnés, revenus estimés sur SocialBlade/NoxInfluencer).
     
-    Provide the response in FRENCH.
+    Puisque les sources de trafic exactes sont privées, vous devez faire une ESTIMATION TRÈS PRÉCISE ET RÉALISTE basée sur le type de contenu de la chaîne (ex: les tutoriels ont >60% de recherche, le divertissement a >70% de suggestions/navigation).
     
-    Provide:
-    1. Main traffic sources (e.g., YouTube Search, Suggested Videos, External, Browse Features) with estimated percentages.
-    2. Audience demographics (age, top countries).
-    3. Engagement metrics (Average View Duration, Audience Retention).
-    4. 3-5 actionable recommendations to improve organic traffic based on these sources.`,
+    RÉPONDEZ EN FRANÇAIS.
+    
+    Fournissez :
+    1. Vues mensuelles estimées (donnée réelle).
+    2. Revenus mensuels estimés (donnée réelle basée sur le RPM du marché).
+    3. Score d'autorité de la chaîne (0-100).
+    4. Le moteur de trafic principal (ex: "Recherche YouTube", "Fonctionnalités de navigation").
+    5. Géographie de l'audience (estimation basée sur la langue et le contenu).
+    6. Sources de trafic (estimations réalistes en % qui totalisent 100%).
+    7. Métriques d'engagement (Taux d'engagement réel estimé, Rétention estimée).
+    8. 3 recommandations ultra-spécifiques et actionnables pour cette chaîne exacte.`,
     config: {
       tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
         properties: {
+          monthly_views_estimate: { type: Type.STRING, description: "Ex: '1.5M - 2M vues/mois'" },
+          monthly_revenue_estimate: { type: Type.STRING, description: "Ex: '3 000 € - 8 000 €'" },
+          channel_authority_score: { type: Type.NUMBER, description: "Score 0-100" },
+          primary_traffic_driver: { type: Type.STRING },
+          audience_geography: { type: Type.STRING },
           traffic_sources: {
             type: Type.ARRAY,
             items: {
@@ -626,25 +682,17 @@ export async function analyzeTrafficSources(channelName: string) {
               required: ["source", "percentage"]
             }
           },
-          demographics: {
-            type: Type.OBJECT,
-            properties: {
-              top_countries: { type: Type.ARRAY, items: { type: Type.STRING } },
-              age_groups: { type: Type.ARRAY, items: { type: Type.STRING } }
-            },
-            required: ["top_countries", "age_groups"]
-          },
           engagement_metrics: {
             type: Type.OBJECT,
             properties: {
-              avg_view_duration: { type: Type.STRING },
-              audience_retention: { type: Type.STRING }
+              engagement_rate: { type: Type.STRING, description: "Ex: '4.5%'" },
+              estimated_retention: { type: Type.STRING, description: "Ex: '40-50%'" }
             },
-            required: ["avg_view_duration", "audience_retention"]
+            required: ["engagement_rate", "estimated_retention"]
           },
           recommendations: { type: Type.ARRAY, items: { type: Type.STRING } }
         },
-        required: ["traffic_sources", "demographics", "engagement_metrics", "recommendations"]
+        required: ["monthly_views_estimate", "monthly_revenue_estimate", "channel_authority_score", "primary_traffic_driver", "audience_geography", "traffic_sources", "engagement_metrics", "recommendations"]
       }
     }
   });
@@ -655,18 +703,20 @@ export async function analyzeTrafficSources(channelName: string) {
 }
 
 export async function fetchChannelTopVideos(channelName: string) {
-  const cacheKey = `top_videos_${channelName}`;
+  const cacheKey = `top_videos_v2_${channelName}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
   const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Act as a YouTube analytics tool. Find the 5 BEST, TOP PERFORMING videos for the channel "${channelName}".
-    YOU MUST USE REAL, EXISTING YOUTUBE DATA FROM THIS SPECIFIC CHANNEL. Do not include videos from other channels.
-    For each video, provide:
-    - title: The EXACT title of the video from "${channelName}"
-    - views: String like '45M', '3.2M' (Real stats)
-    - url: The actual YouTube video URL if possible, or a search link.
+    model: "gemini-3.1-pro-preview",
+    contents: `Agissez comme un outil d'analyse YouTube. Trouvez les 5 VIDÉOS LES PLUS VUES (Top vidéos) RÉELLES de la chaîne "${channelName}".
+    VOUS DEVEZ UTILISER DES DONNÉES RÉELLES ET VÉRIDIQUES. Cherchez spécifiquement les vidéos les plus populaires de cette chaîne exacte.
+    Ne confondez pas avec d'autres chaînes.
+    Pour chaque vidéo, fournissez :
+    - title: Le titre EXACT de la vidéo.
+    - views: Le nombre de vues RÉEL (ex: '4.2M vues').
+    - url: L'URL réelle de la vidéo ou un lien de recherche pertinent.
+    - published_date: La date ou l'année de publication (ex: 'Il y a 2 ans').
     `,
     config: {
       tools: [{ googleSearch: {} }],
@@ -678,9 +728,10 @@ export async function fetchChannelTopVideos(channelName: string) {
           properties: {
             title: { type: Type.STRING },
             views: { type: Type.STRING },
-            url: { type: Type.STRING }
+            url: { type: Type.STRING },
+            published_date: { type: Type.STRING }
           },
-          required: ["title", "views", "url"]
+          required: ["title", "views", "url", "published_date"]
         }
       }
     }
@@ -692,31 +743,41 @@ export async function fetchChannelTopVideos(channelName: string) {
 }
 
 export async function generateGrowthStrategy(channelName: string, analysis: any) {
-  const cacheKey = `strategy_${channelName}`;
+  const cacheKey = `strategy_v3_${channelName}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
   const response = await ai.models.generateContent({
     model: "gemini-3.1-pro-preview",
-    contents: `Act as a world-class YouTube growth strategist. Based on the following analysis of the channel "${channelName}": ${JSON.stringify(analysis)}, provide a "MAGIC" strategy (more effective than standard tools like VidIQ) to explode the channel's growth.
+    contents: `Agissez en tant que stratège YouTube d'élite mondial. En vous basant sur l'analyse de la chaîne "${channelName}": ${JSON.stringify(analysis)}, fournissez LA SOLUTION PARFAITE À SUIVRE (un plan d'action infaillible et étape par étape) pour faire exploser la croissance de la chaîne.
     
-    Provide the response in FRENCH.
+    RÉPONDEZ EN FRANÇAIS.
     
-    The strategy should be highly specific, unconventional, and actionable. Focus on:
-    1. Content gaps and opportunities.
-    2. Psychological triggers for higher CTR and retention.
-    3. Community building tactics.
-    4. A 30-day "explosive" content plan.`,
+    La stratégie doit être structurée comme une feuille de route (roadmap) parfaite :
+    1. Un résumé percutant de la stratégie globale.
+    2. Une feuille de route en 3 phases (ex: Immédiat, Court terme, Long terme) avec des actions ultra-spécifiques.
+    3. La "Sauce Secrète" (1 ou 2 tactiques psychologiques ou de rétention très avancées).`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
         properties: {
           strategy_summary: { type: Type.STRING },
-          content_plan: { type: Type.ARRAY, items: { type: Type.STRING } },
-          unconventional_tactics: { type: Type.ARRAY, items: { type: Type.STRING } }
+          perfect_roadmap: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                phase_name: { type: Type.STRING, description: "Ex: Phase 1 : Optimisation Immédiate (Jours 1-7)" },
+                objective: { type: Type.STRING },
+                action_steps: { type: Type.ARRAY, items: { type: Type.STRING } }
+              },
+              required: ["phase_name", "objective", "action_steps"]
+            }
+          },
+          secret_sauce: { type: Type.ARRAY, items: { type: Type.STRING } }
         },
-        required: ["strategy_summary", "content_plan", "unconventional_tactics"]
+        required: ["strategy_summary", "perfect_roadmap", "secret_sauce"]
       }
     }
   });

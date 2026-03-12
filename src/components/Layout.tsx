@@ -23,9 +23,6 @@ import {
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useProMode } from '../context/ProModeContext';
-import { useTheme } from '../context/ThemeContext';
-import { auth } from '../lib/firebase';
-import { signOut } from 'firebase/auth';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -39,18 +36,11 @@ interface LayoutProps {
 
 export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const { isPro, toggleProMode } = useProMode();
-  const { theme, toggleTheme } = useTheme();
-
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
 
   const navigation = [
+    { name: 'Accueil', id: 'landing', icon: BarChart2 },
     { name: 'Dashboard', id: 'dashboard', icon: BarChart2 },
     { name: 'Keyword Tool', id: 'keyword', icon: Search },
     { name: 'Video Analyzer', id: 'video', icon: Video },
@@ -153,43 +143,38 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
           
           <div className="flex flex-1 justify-end">
             <div className="flex items-center gap-3">
-              <div className="hidden sm:flex items-center gap-4 mr-4 border-r border-slate-200 dark:border-slate-800 pr-4">
-                <button
-                  onClick={toggleTheme}
-                  className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                >
-                  {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3">
+              <div className="relative">
                 <button 
-                  onClick={() => setActiveTab('profile')}
+                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                   className="flex items-center gap-3 group text-left"
                 >
                   <div className="text-right hidden sm:block">
                     <p className="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1 group-hover:text-indigo-600 transition-colors">
-                      {auth.currentUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'User'}
+                      Demo User
                     </p>
                     <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                       {isPro ? 'Pro Member' : 'Free Member'}
                     </p>
                   </div>
                   <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform overflow-hidden">
-                    {auth.currentUser?.photoURL ? (
-                      <img src={auth.currentUser.photoURL} alt="Avatar" className="h-full w-full object-cover" />
-                    ) : (
-                      auth.currentUser?.displayName?.charAt(0).toUpperCase() || auth.currentUser?.email?.charAt(0).toUpperCase() || 'U'
-                    )}
+                    D
                   </div>
                 </button>
-                <button
-                  onClick={handleLogout}
-                  className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all"
-                  title="Déconnexion"
-                >
-                  <LogOut className="h-5 w-5" />
-                </button>
+                
+                {isProfileMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a1b20] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-50">
+                    <button onClick={() => {setActiveTab('profile'); setIsProfileMenuOpen(false);}} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors">
+                      <User className="h-4 w-4" /> Mon Profil
+                    </button>
+                    <button onClick={() => {setActiveTab('pricing'); setIsProfileMenuOpen(false);}} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors">
+                      <CreditCard className="h-4 w-4" /> Tarifs
+                    </button>
+                    <div className="border-t border-slate-200 dark:border-slate-800 my-1"></div>
+                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors">
+                      <LogOut className="h-4 w-4" /> Déconnexion
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

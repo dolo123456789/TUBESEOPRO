@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Check, Crown, Zap, Shield, Star, Sparkles } from 'lucide-react';
+import { Check, Crown, Zap, Shield, Star, Sparkles, ArrowLeft } from 'lucide-react';
 import { useProMode } from '../context/ProModeContext';
 import { cn } from './Layout';
 
-export function PricingView() {
+export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
   const { isPro } = useProMode();
 
   const plans = [
@@ -12,10 +12,8 @@ export function PricingView() {
       price: '0€',
       description: 'Pour les créateurs qui débutent sur YouTube.',
       features: [
-        'Recherche de mots-clés (10/jour)',
-        'Analyse SEO de base',
-        'Générateur de tags',
-        'Checklist SEO statique',
+        'Recherche de mots-clés (1/jour)',
+        'Analyse SEO limitée',
         'Support communautaire'
       ],
       buttonText: 'Plan Actuel',
@@ -68,6 +66,13 @@ export function PricingView() {
 
   return (
     <div className="space-y-12 py-8">
+      <button
+        onClick={() => setActiveTab('dashboard')}
+        className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors mb-6"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Retour au tableau de bord
+      </button>
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
           Choisissez le plan qui vous fera <span className="text-red-600">décoller</span>
@@ -127,16 +132,33 @@ export function PricingView() {
               </ul>
 
               <button
-                onClick={() => {
-                  window.location.href = "mailto:adjisanoudolo1@gmail.com?subject=Demande d'accès TubeSEO Pro";
+                onClick={async () => {
+                  if (plan.name === 'Pro') {
+                    try {
+                      const response = await fetch('/api/create-checkout-session', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                      });
+                      const { url } = await response.json();
+                      if (url) {
+                        window.location.href = url;
+                      }
+                    } catch (error) {
+                      console.error('Stripe error:', error);
+                    }
+                  } else if (plan.name !== 'Gratuit') {
+                    window.location.href = "mailto:adjisanoudolo1@gmail.com?subject=Demande d'accès TubeSEO Pro";
+                  }
                 }}
-                disabled={plan.name === 'Pro' && isPro}
+                disabled={plan.name === 'Gratuit' || (plan.name === 'Pro' && isPro)}
                 className={cn(
                   "w-full py-3 px-6 rounded-xl font-bold transition-all duration-200",
                   plan.highlight
                     ? "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20"
                     : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white",
-                  (plan.name === 'Pro' && isPro) && "opacity-50 cursor-not-allowed"
+                  (plan.name === 'Gratuit' || (plan.name === 'Pro' && isPro)) && "opacity-50 cursor-not-allowed"
                 )}
               >
                 {plan.buttonText}

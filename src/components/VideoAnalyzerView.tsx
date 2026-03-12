@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Video, Loader2, CheckCircle2, AlertCircle, TrendingUp, Copy, Sparkles, Crown, Image as ImageIcon, Wand2, X } from 'lucide-react';
 import { analyzeVideoSEO, generateThumbnail } from '../services/geminiService';
 import { useProMode } from '../context/ProModeContext';
+import { Toast } from './Toast';
 
 export function VideoAnalyzerView() {
   const [title, setTitle] = useState('');
@@ -10,9 +11,9 @@ export function VideoAnalyzerView() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
   const [data, setData] = useState<any>(null);
-  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<{ horizontal: string, vertical: string } | null>(null);
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const { isPro } = useProMode();
 
@@ -27,7 +28,7 @@ export function VideoAnalyzerView() {
     if (!title.trim() || !description.trim()) return;
 
     setIsLoading(true);
-    setError('');
+    setToast(null);
     setData(null);
     setThumbnailUrl(null);
     try {
@@ -36,9 +37,10 @@ export function VideoAnalyzerView() {
         throw new Error('No data returned from analysis.');
       }
       setData(result);
+      setToast({ message: 'Analyse terminée avec succès !', type: 'success' });
     } catch (err) {
       console.error('Analysis error:', err);
-      setError('Failed to analyze video. Please check your connection and try again.');
+      setToast({ message: 'Erreur lors de l\'analyse. Veuillez réessayer.', type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -48,12 +50,14 @@ export function VideoAnalyzerView() {
     if (!data?.thumbnail_prompt) return;
     
     setIsGeneratingThumbnail(true);
+    setToast(null);
     try {
-      const url = await generateThumbnail(data.thumbnail_prompt, referenceImage || undefined);
-      setThumbnailUrl(url);
+      const urls = await generateThumbnail(data.thumbnail_prompt, referenceImage || undefined);
+      setThumbnailUrl(urls);
+      setToast({ message: 'Miniature générée avec succès !', type: 'success' });
     } catch (err) {
       console.error('Thumbnail generation error:', err);
-      setError('Failed to generate thumbnail. Please try again.');
+      setToast({ message: 'Erreur lors de la génération. Veuillez réessayer.', type: 'error' });
     } finally {
       setIsGeneratingThumbnail(false);
     }
@@ -63,7 +67,7 @@ export function VideoAnalyzerView() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        setError('Image size should be less than 5MB');
+        setToast({ message: 'Image size should be less than 5MB', type: 'error' });
         return;
       }
       const reader = new FileReader();
@@ -76,6 +80,7 @@ export function VideoAnalyzerView() {
 
   return (
     <div className="space-y-6">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Video SEO Analyzer</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">Analyze your video metadata to maximize reach and engagement.</p>
@@ -144,13 +149,6 @@ export function VideoAnalyzerView() {
             </button>
           </form>
         </div>
-
-        {error && (
-          <div className="rounded-lg bg-red-50 dark:bg-red-900/20 p-4 text-sm text-red-800 dark:text-red-400 flex items-center gap-2">
-            <AlertCircle className="h-5 w-5" />
-            {error}
-          </div>
-        )}
 
         {data && !isLoading && (
           <div className="space-y-6">
@@ -252,14 +250,16 @@ export function VideoAnalyzerView() {
                   <ImageIcon className="h-5 w-5 text-indigo-500" />
                   Thumbnail Strategy
                 </h3>
-                <button
-                  onClick={handleGenerateThumbnail}
-                  disabled={isGeneratingThumbnail}
-                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                >
-                  {isGeneratingThumbnail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                  {thumbnailUrl ? 'Regenerate' : 'Generate Thumbnail'}
-                </button>
+                <div className="flex items-center justify-end">
+                  <button
+                    onClick={handleGenerateThumbnail}
+                    disabled={isGeneratingThumbnail}
+                    className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                  >
+                    {isGeneratingThumbnail ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
+                    {thumbnailUrl ? 'Regénérer' : 'Générer'}
+                  </button>
+                </div>
               </div>
               
               <div className="space-y-6">
@@ -301,28 +301,62 @@ export function VideoAnalyzerView() {
                 </div>
 
                 {thumbnailUrl && (
-                  <div className="space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Generated Result</p>
-                    <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-indigo-500 shadow-xl group">
-                      <img src={thumbnailUrl} alt="Generated Thumbnail" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                        <button 
-                          onClick={() => window.open(thumbnailUrl, '_blank')}
-                          className="bg-white text-slate-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-slate-100 transition-colors"
-                        >
-                          Full Preview
-                        </button>
-                        <button 
-                          onClick={() => {
-                            const link = document.createElement('a');
-                            link.href = thumbnailUrl;
-                            link.download = `thumbnail-${Date.now()}.png`;
-                            link.click();
-                          }}
-                          className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-indigo-500 transition-colors"
-                        >
-                          Download
-                        </button>
+                  <div className="space-y-6">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Generated Results</p>
+                    
+                    <div className="grid gap-6 md:grid-cols-2">
+                      {/* 16:9 Thumbnail */}
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Format Standard (16:9)</p>
+                        <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-indigo-500 shadow-xl group">
+                          <img src={thumbnailUrl.horizontal} alt="Generated Thumbnail 16:9" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                            <button 
+                              onClick={() => window.open(thumbnailUrl.horizontal, '_blank')}
+                              className="bg-white text-slate-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-slate-100 transition-colors"
+                            >
+                              Preview
+                            </button>
+                            <button 
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = thumbnailUrl.horizontal;
+                                link.download = `thumbnail-16x9-${Date.now()}.png`;
+                                link.click();
+                              }}
+                              className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-indigo-500 transition-colors"
+                            >
+                              Download
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* 9:16 Thumbnail */}
+                      <div className="space-y-2">
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Format Short (9:16)</p>
+                        <div className="relative aspect-[9/16] w-full max-w-[240px] mx-auto rounded-lg overflow-hidden border-2 border-indigo-500 shadow-xl group">
+                          <img src={thumbnailUrl.vertical} alt="Generated Thumbnail 9:16" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
+                            <button 
+                              onClick={() => window.open(thumbnailUrl.vertical, '_blank')}
+                              className="bg-white text-slate-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-slate-100 transition-colors"
+                            >
+                              Preview
+                            </button>
+                            <button 
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = thumbnailUrl.vertical;
+                                link.download = `thumbnail-9x16-${Date.now()}.png`;
+                                link.click();
+                              }}
+                              className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-indigo-500 transition-colors"
+                            >
+                              Download
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -369,10 +403,19 @@ export function VideoAnalyzerView() {
 
             {data.optimized_metadata && (
               <div className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/50 dark:bg-indigo-900/10 p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-indigo-900 dark:text-indigo-300 mb-4 flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
-                  Optimized Metadata Solution
-                </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-indigo-900 dark:text-indigo-300 flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-indigo-600 dark:text-indigo-400" />
+                    Optimized Metadata Solution
+                  </h3>
+                  <button
+                    onClick={() => handleCopy(`${data.optimized_metadata.title}\n\n${data.optimized_metadata.description}\n\nTags: ${data.optimized_metadata.tags}`, 'metadata')}
+                    className="flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    {copiedField === 'metadata' ? 'Copié !' : 'Copier tout'}
+                  </button>
+                </div>
                 <p className="text-sm text-indigo-700 dark:text-indigo-400 mb-6">
                   Use this AI-generated optimized metadata to maximize your video's SEO score (95+).
                 </p>

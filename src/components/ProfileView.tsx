@@ -1,13 +1,10 @@
 import React, { useState, useRef } from 'react';
 import { User, Mail, Shield, Save, Loader2, Camera, Trash2 } from 'lucide-react';
-import { auth, storage } from '../lib/firebase';
-import { updateProfile } from 'firebase/auth';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 export function ProfileView() {
-  const user = auth.currentUser;
-  const [displayName, setDisplayName] = useState(user?.displayName || '');
-  const [photoURL, setPhotoURL] = useState(user?.photoURL || '');
+  const [displayName, setDisplayName] = useState('Demo User');
+  const [email] = useState('demo@example.com');
+  const [photoURL, setPhotoURL] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -15,28 +12,18 @@ export function ProfileView() {
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
-
     setIsLoading(true);
     setMessage({ type: '', text: '' });
 
-    try {
-      await updateProfile(user, {
-        displayName: displayName,
-        photoURL: photoURL
-      });
-      setMessage({ type: 'success', text: 'Profil mis à jour avec succès !' });
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      setMessage({ type: 'error', text: 'Erreur lors de la mise à jour du profil.' });
-    } finally {
+    setTimeout(() => {
+      setMessage({ type: 'success', text: 'Profil mis à jour avec succès (Mode Démo) !' });
       setIsLoading(false);
-    }
+    }, 800);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file) return;
 
     // Basic validation
     if (!file.type.startsWith('image/')) {
@@ -52,37 +39,21 @@ export function ProfileView() {
     setIsUploading(true);
     setMessage({ type: '', text: '' });
 
-    try {
-      const storageRef = ref(storage, `avatars/${user.uid}/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
-      
-      setPhotoURL(downloadURL);
-      
-      // Also update the profile immediately for better UX
-      await updateProfile(user, { photoURL: downloadURL });
-      
-      setMessage({ type: 'success', text: 'Photo de profil mise à jour !' });
-    } catch (error) {
-      console.error('Error uploading photo:', error);
-      setMessage({ type: 'error', text: 'Erreur lors de l\'envoi de la photo.' });
-    } finally {
+    setTimeout(() => {
+      const objectUrl = URL.createObjectURL(file);
+      setPhotoURL(objectUrl);
+      setMessage({ type: 'success', text: 'Photo de profil mise à jour (Mode Démo) !' });
       setIsUploading(false);
-    }
+    }, 1000);
   };
 
   const removePhoto = async () => {
-    if (!user) return;
-    try {
-      setIsUploading(true);
-      await updateProfile(user, { photoURL: '' });
+    setIsUploading(true);
+    setTimeout(() => {
       setPhotoURL('');
       setMessage({ type: 'success', text: 'Photo de profil supprimée.' });
-    } catch (error) {
-      console.error('Error removing photo:', error);
-    } finally {
       setIsUploading(false);
-    }
+    }, 500);
   };
 
   return (
@@ -118,7 +89,7 @@ export function ProfileView() {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                     <input 
                       type="email" 
-                      value={user?.email || ''} 
+                      value={email} 
                       disabled
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-[#0f1115]/50 text-slate-500 cursor-not-allowed outline-none"
                     />
@@ -175,7 +146,7 @@ export function ProfileView() {
                 ) : photoURL ? (
                   <img src={photoURL} alt="Profile" className="h-full w-full object-cover" />
                 ) : (
-                  displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'
+                  displayName?.charAt(0).toUpperCase() || 'U'
                 )}
               </div>
               <input 
@@ -202,7 +173,7 @@ export function ProfileView() {
               )}
             </div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-white">{displayName || 'Utilisateur'}</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{user?.email}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{email}</p>
             
             <div className="pt-6 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-4">
               <div>
