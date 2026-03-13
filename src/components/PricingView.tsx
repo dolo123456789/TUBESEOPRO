@@ -25,8 +25,8 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
     {
       name: 'Pro',
       price: '24€',
-      period: '/mois',
-      description: 'Pour les créateurs sérieux qui veulent exploser leur croissance.',
+      period: ' / 3 mois',
+      description: '24€ pour les 3 premiers mois, puis 24€/mois.',
       features: [
         'Recherche de mots-clés illimitée',
         'Données CPC & Tendances Pro',
@@ -45,7 +45,7 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
     },
     {
       name: 'Enterprise',
-      price: '97€',
+      price: '99.9€',
       period: '/mois',
       description: 'Pour les agences et les réseaux de chaînes YouTube.',
       features: [
@@ -120,6 +120,11 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
               <div className="mb-8">
                 <span className="text-4xl font-bold text-slate-900 dark:text-white">{plan.price}</span>
                 {plan.period && <span className="text-slate-500 ml-1">{plan.period}</span>}
+                {plan.name === 'Pro' && (
+                  <p className="text-xs text-amber-600 font-semibold mt-2 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded">
+                    Puis 24€/mois après 3 mois
+                  </p>
+                )}
               </div>
 
               <ul className="flex-1 space-y-4 mb-8">

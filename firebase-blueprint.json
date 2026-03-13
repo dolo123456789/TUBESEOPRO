@@ -1,0 +1,39 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User account information including security data.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "ipAddress": { "type": "string" },
+        "isBanned": { "type": "boolean" },
+        "lastLoginAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "ipAddress", "isBanned"]
+    },
+    "SecurityLog": {
+      "title": "SecurityLog",
+      "description": "Logs of user actions for security auditing.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "ipAddress": { "type": "string" },
+        "action": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "details": { "type": "string" }
+      },
+      "required": ["email", "ipAddress", "action", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "User" },
+      "description": "User security and profile data."
+    },
+    "/securityLogs/{logId}": {
+      "schema": { "$ref": "SecurityLog" },
+      "description": "Security audit logs."
+    }
+  }
+}
