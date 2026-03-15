@@ -137,9 +137,13 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
               </ul>
 
               <button
-                onClick={async () => {
+                onClick={async (e) => {
+                  const btn = e.currentTarget;
+                  const originalText = btn.innerText;
                   if (plan.name === 'Pro') {
                     try {
+                      btn.innerText = 'Chargement...';
+                      btn.disabled = true;
                       const response = await fetch('/api/create-checkout-session', {
                         method: 'POST',
                         headers: {
@@ -149,9 +153,14 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
                       const { url } = await response.json();
                       if (url) {
                         window.location.href = url;
+                      } else {
+                        btn.innerText = originalText;
+                        btn.disabled = false;
                       }
                     } catch (error) {
-                      console.error('Stripe error:', error);
+                      console.error('Paydunya error:', error);
+                      btn.innerText = originalText;
+                      btn.disabled = false;
                     }
                   } else if (plan.name !== 'Gratuit') {
                     window.location.href = "mailto:adjisanoudolo1@gmail.com?subject=Demande d'accès TubeSEO Pro";

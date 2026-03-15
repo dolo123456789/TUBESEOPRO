@@ -118,8 +118,32 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
               <p className="text-sm font-bold mb-3">{isPro ? 'Professional Plan' : 'Free Tier'}</p>
               {!isPro && (
                 <button 
-                  onClick={toggleProMode}
-                  className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-xs font-bold py-2 rounded-lg transition-colors"
+                  onClick={async (e) => {
+                    const btn = e.currentTarget;
+                    const originalText = btn.innerText;
+                    try {
+                      btn.innerText = '...';
+                      btn.disabled = true;
+                      const response = await fetch('/api/create-checkout-session', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                      });
+                      const { url } = await response.json();
+                      if (url) {
+                        window.location.href = url;
+                      } else {
+                        btn.innerText = originalText;
+                        btn.disabled = false;
+                      }
+                    } catch (error) {
+                      console.error('Payment error:', error);
+                      btn.innerText = originalText;
+                      btn.disabled = false;
+                    }
+                  }}
+                  className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-xs font-bold py-2 rounded-lg transition-colors disabled:opacity-50"
                 >
                   Upgrade Now
                 </button>
