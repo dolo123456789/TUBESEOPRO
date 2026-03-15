@@ -1,51 +1,158 @@
 import React, { useState, useEffect } from 'react';
-import { Key, Save, Loader2, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Key, Save, Loader2, ShieldCheck, AlertCircle, LogIn } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
+
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+    tenantId: string | null | undefined;
+    providerInfo: {
+      providerId: string;
+      displayName: string | null;
+      email: string | null;
+      photoUrl: string | null;
+    }[];
+  }
+}
 
 export function SettingsView() {
+  console.log("SettingsView rendering...");
   const [keys, setKeys] = useState({
     master_key: '',
     public_key: '',
     private_key: '',
     token: ''
   });
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
 
   useEffect(() => {
-    async function fetchKeys() {
-      try {
-        const docRef = doc(db, 'app_config', 'paydunya');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setKeys(docSnap.data() as any);
-        }
-      } catch (error) {
-        console.error('Error fetching keys:', error);
-      } finally {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        fetchKeys();
+      } else {
         setIsLoading(false);
       }
-    }
-    fetchKeys();
+    });
+    return () => unsubscribe();
   }, []);
+
+  const handleFirestoreError = (error: unknown, operationType: OperationType, path: string | null) => {
+    const errInfo: FirestoreErrorInfo = {
+      error: error instanceof Error ? error.message : String(error),
+      authInfo: {
+        userId: auth.currentUser?.uid,
+        email: auth.currentUser?.email,
+        emailVerified: auth.currentUser?.emailVerified,
+        isAnonymous: auth.currentUser?.isAnonymous,
+        tenantId: auth.currentUser?.tenantId,
+        providerInfo: auth.currentUser?.providerData.map(provider => ({
+          providerId: provider.providerId,
+          displayName: provider.displayName,
+          email: provider.email,
+          photoUrl: provider.photoURL
+        })) || []
+      },
+      operationType,
+      path
+    };
+    console.error('Firestore Error Details:', JSON.stringify(errInfo, null, 2));
+    
+    if (errInfo.error.includes('insufficient permissions')) {
+      setMessage({ 
+        type: 'error', 
+        text: 'Accès refusé. Seul l\'administrateur (adjisanoudolo1@gmail.com) peut modifier ces paramètres.' 
+      });
+    } else {
+      setMessage({ type: 'error', text: 'Erreur Firestore : ' + errInfo.error });
+    }
+  };
+
+  async function fetchKeys() {
+    setIsLoading(true);
+    const path = 'app_config/paydunya';
+    console.log("Fetching keys from Firestore...");
+    try {
+      const docRef = doc(db, 'app_config', 'paydunya');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        console.log("Keys found in Firestore:", Object.keys(data));
+        setKeys(prev => ({
+          master_key: data.master_key || prev.master_key,
+          public_key: data.public_key || prev.public_key,
+          private_key: data.private_key || prev.private_key,
+          token: data.token || prev.token
+        }));
+      } else {
+        console.log("No keys found in Firestore at", path);
+      }
+    } catch (error) {
+      console.error("Error in fetchKeys:", error);
+      handleFirestoreError(error, OperationType.GET, path);
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Attempting to save keys...");
+    if (!user) {
+      setMessage({ type: 'error', text: 'Veuillez vous connecter pour enregistrer les clés.' });
+      return;
+    }
+
     setIsSaving(true);
     setMessage({ type: '', text: '' });
+    const path = 'app_config/paydunya';
 
     try {
+      console.log("Saving to Firestore path:", path);
       await setDoc(doc(db, 'app_config', 'paydunya'), keys);
+      console.log("Save successful!");
       setMessage({ type: 'success', text: 'Clés Paydunya enregistrées avec succès !' });
     } catch (error) {
-      console.error('Error saving keys:', error);
-      setMessage({ type: 'error', text: 'Erreur lors de l\'enregistrement des clés.' });
+      console.error("Error in handleSave:", error);
+      handleFirestoreError(error, OperationType.WRITE, path);
     } finally {
       setIsSaving(false);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <div className="p-4 rounded-full bg-amber-500/10 text-amber-600">
+          <AlertCircle className="h-12 w-12" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">Connexion requise</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-center max-w-sm">
+          Vous devez être connecté avec votre compte administrateur pour configurer les clés API.
+        </p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

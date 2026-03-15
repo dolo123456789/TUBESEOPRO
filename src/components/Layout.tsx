@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useState, useEffect } from 'react';
 import { 
   BarChart2, 
   BarChart3,
@@ -19,11 +19,14 @@ import {
   Bot,
   ClipboardCheck,
   LogOut,
-  Settings
+  Settings,
+  LogIn
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useProMode } from '../context/ProModeContext';
+import { auth } from '../firebase';
+import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -38,7 +41,33 @@ interface LayoutProps {
 export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const { isPro, toggleProMode } = useProMode();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error('Login error:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setIsProfileMenuOpen(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   const navigation = [
     { name: 'Accueil', id: 'landing', icon: BarChart2 },
@@ -172,39 +201,60 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
           
           <div className="flex flex-1 justify-end">
             <div className="flex items-center gap-3">
-              <div className="relative">
+              {user ? (
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                    className="flex items-center gap-3 group text-left"
+                  >
+                    <div className="text-right hidden sm:block">
+                      <p className="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1 group-hover:text-indigo-600 transition-colors">
+                        {user.displayName || 'Utilisateur'}
+                      </p>
+                      <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        {isPro ? 'Pro Member' : 'Free Member'}
+                      </p>
+                    </div>
+                    {user.photoURL ? (
+                      <img 
+                        src={user.photoURL} 
+                        alt="Profile" 
+                        referrerPolicy="no-referrer"
+                        className="h-10 w-10 rounded-xl shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform overflow-hidden">
+                        {user.displayName?.charAt(0) || 'U'}
+                      </div>
+                    )}
+                  </button>
+                  
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a1b20] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-50">
+                      <button onClick={() => {setActiveTab('profile'); setIsProfileMenuOpen(false);}} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors">
+                        <User className="h-4 w-4" /> Mon Profil
+                      </button>
+                      <button onClick={() => {setActiveTab('pricing'); setIsProfileMenuOpen(false);}} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors">
+                        <CreditCard className="h-4 w-4" /> Tarifs
+                      </button>
+                      <div className="border-t border-slate-200 dark:border-slate-800 my-1"></div>
+                      <button 
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
+                      >
+                        <LogOut className="h-4 w-4" /> Déconnexion
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
                 <button 
-                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                  className="flex items-center gap-3 group text-left"
+                  onClick={handleLogin}
+                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20"
                 >
-                  <div className="text-right hidden sm:block">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1 group-hover:text-indigo-600 transition-colors">
-                      Demo User
-                    </p>
-                    <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      {isPro ? 'Pro Member' : 'Free Member'}
-                    </p>
-                  </div>
-                  <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform overflow-hidden">
-                    D
-                  </div>
+                  <LogIn className="h-4 w-4" /> Connexion
                 </button>
-                
-                {isProfileMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a1b20] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-50">
-                    <button onClick={() => {setActiveTab('profile'); setIsProfileMenuOpen(false);}} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors">
-                      <User className="h-4 w-4" /> Mon Profil
-                    </button>
-                    <button onClick={() => {setActiveTab('pricing'); setIsProfileMenuOpen(false);}} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors">
-                      <CreditCard className="h-4 w-4" /> Tarifs
-                    </button>
-                    <div className="border-t border-slate-200 dark:border-slate-800 my-1"></div>
-                    <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors">
-                      <LogOut className="h-4 w-4" /> Déconnexion
-                    </button>
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
         </header>
