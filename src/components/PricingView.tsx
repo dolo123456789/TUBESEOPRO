@@ -150,15 +150,18 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
                           'Content-Type': 'application/json',
                         },
                       });
-                      const { url } = await response.json();
-                      if (url) {
-                        window.location.href = url;
+                      const data = await response.json();
+                      if (data.url) {
+                        window.location.href = data.url;
                       } else {
+                        console.error('Payment error:', data.error);
+                        alert('Erreur de paiement: ' + (data.error || 'Veuillez vérifier vos clés API Paydunya dans les paramètres.'));
                         btn.innerText = originalText;
                         btn.disabled = false;
                       }
                     } catch (error) {
                       console.error('Paydunya error:', error);
+                      alert('Erreur de connexion au serveur de paiement.');
                       btn.innerText = originalText;
                       btn.disabled = false;
                     }
@@ -221,7 +224,7 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
             </div>
             <div className="space-y-2">
               <h4 className="font-bold text-indigo-900 dark:text-indigo-100">Paiements Sécurisés</h4>
-              <p className="text-sm text-indigo-700/70 dark:text-indigo-300/70">Transactions gérées par Stripe avec une sécurité de niveau bancaire (PCI DSS Compliant).</p>
+              <p className="text-sm text-indigo-700/70 dark:text-indigo-300/70">Transactions gérées par Paydunya avec une sécurité de niveau bancaire (PCI DSS Compliant).</p>
             </div>
           </div>
         </div>

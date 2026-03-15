@@ -130,15 +130,18 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
                           'Content-Type': 'application/json',
                         },
                       });
-                      const { url } = await response.json();
-                      if (url) {
-                        window.location.href = url;
+                      const data = await response.json();
+                      if (data.url) {
+                        window.location.href = data.url;
                       } else {
+                        console.error('Payment error:', data.error);
+                        alert('Erreur de paiement: ' + (data.error || 'Veuillez vérifier vos clés API Paydunya.'));
                         btn.innerText = originalText;
                         btn.disabled = false;
                       }
                     } catch (error) {
                       console.error('Payment error:', error);
+                      alert('Erreur de connexion au serveur de paiement.');
                       btn.innerText = originalText;
                       btn.disabled = false;
                     }
