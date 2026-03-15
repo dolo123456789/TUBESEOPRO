@@ -32,13 +32,16 @@ interface FirestoreErrorInfo {
   }
 }
 
+import { cn } from './Layout';
+
 export function SettingsView() {
   console.log("SettingsView rendering...");
   const [keys, setKeys] = useState({
     master_key: '',
     public_key: '',
     private_key: '',
-    token: ''
+    token: '',
+    mode: 'test' as 'test' | 'live'
   });
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -102,7 +105,8 @@ export function SettingsView() {
           master_key: data.master_key || prev.master_key,
           public_key: data.public_key || prev.public_key,
           private_key: data.private_key || prev.private_key,
-          token: data.token || prev.token
+          token: data.token || prev.token,
+          mode: data.mode || prev.mode
         }));
       } else {
         console.log("No keys found in Firestore at", path);
@@ -233,6 +237,41 @@ export function SettingsView() {
                   placeholder="TOKEN"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Mode de paiement</label>
+              <div className="flex gap-4">
+                <button
+                  type="button"
+                  onClick={() => setKeys({...keys, mode: 'test'})}
+                  className={cn(
+                    "flex-1 py-2 rounded-xl border font-bold transition-all",
+                    keys.mode === 'test' 
+                      ? "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400"
+                      : "bg-white border-slate-200 text-slate-500 dark:bg-[#0f1115] dark:border-slate-800"
+                  )}
+                >
+                  Mode Test
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setKeys({...keys, mode: 'live'})}
+                  className={cn(
+                    "flex-1 py-2 rounded-xl border font-bold transition-all",
+                    keys.mode === 'live' 
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400"
+                      : "bg-white border-slate-200 text-slate-500 dark:bg-[#0f1115] dark:border-slate-800"
+                  )}
+                >
+                  Mode Live
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-500 italic">
+                {keys.mode === 'test' 
+                  ? "Utilisez vos clés de test Paydunya pour simuler des paiements." 
+                  : "Attention : les paiements seront réels. Utilisez vos clés de production."}
+              </p>
             </div>
 
             {message.text && (

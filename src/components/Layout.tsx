@@ -38,11 +38,21 @@ interface LayoutProps {
   setActiveTab: (tab: string) => void;
 }
 
+import { Toast } from './Toast';
+
 export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const { isPro, toggleProMode } = useProMode();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('success') === 'true') {
+      setShowSuccessToast(true);
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -189,6 +199,13 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden relative">
+        {showSuccessToast && (
+          <Toast 
+            message="Félicitations ! Votre abonnement Pro est maintenant actif." 
+            type="success" 
+            onClose={() => setShowSuccessToast(false)} 
+          />
+        )}
         <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-900 pointer-events-none opacity-50" />
         
         <header className="flex h-16 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#0f1115]/80 backdrop-blur-md px-4 lg:px-8 z-10">

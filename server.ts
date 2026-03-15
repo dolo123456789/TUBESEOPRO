@@ -29,6 +29,7 @@ async function getPaydunyaConfig() {
     public_key: process.env.PAYDUNYA_PUBLIC_KEY || "",
     private_key: process.env.PAYDUNYA_PRIVATE_KEY || "",
     token: process.env.PAYDUNYA_TOKEN || "",
+    mode: (process.env.PAYDUNYA_MODE as 'test' | 'live') || (isProduction ? "live" : "test"),
   };
 
   // If keys are missing, try to fetch from Firestore
@@ -42,6 +43,7 @@ async function getPaydunyaConfig() {
         config.public_key = config.public_key || data?.public_key || "";
         config.private_key = config.private_key || data?.private_key || "";
         config.token = config.token || data?.token || "";
+        config.mode = config.mode || data?.mode || (isProduction ? "live" : "test");
       }
     } catch (e) {
       console.error("Error fetching Paydunya config from Firestore:", e);
@@ -53,13 +55,23 @@ async function getPaydunyaConfig() {
 async function setupPaydunya() {
   try {
     const config = await getPaydunyaConfig();
-    console.log("Setting up Paydunya...");
+    console.log("Setting up Paydunya with keys:", {
+      master_key: config.master_key ? "PRESENT (starts with " + config.master_key.substring(0, 5) + "...)" : "MISSING",
+      public_key: config.public_key ? "PRESENT" : "MISSING",
+      private_key: config.private_key ? "PRESENT" : "MISSING",
+      token: config.token ? "PRESENT" : "MISSING",
+    });
+    
+    if (!config.master_key || !config.public_key || !config.private_key || !config.token) {
+      console.warn("Paydunya configuration is incomplete!");
+    }
+
     paydunya.setup({
       master_key: config.master_key,
       public_key: config.public_key,
       private_key: config.private_key,
       token: config.token,
-      mode: isProduction ? "live" : "test",
+      mode: config.mode,
     });
 
     paydunya.Store.name = "TubeSEOPro";
@@ -183,7 +195,13 @@ async function startServer() {
               if (success) {
                 resolve(invoice.getInvoiceUrl());
               } else {
-                reject(invoice.response_text || "Erreur lors de la création de la facture");
+                console.error("Paydunya invoice creation failed. Response:", invoice.response_text);
+                console.error("Full invoice object (partial):", {
+                  status: invoice.status,
+                  response_code: invoice.response_code,
+                  response_text: invoice.response_text
+                });
+                reject(invoice.response_text || "Erreur lors de la création de la facture. Vérifiez vos clés API.");
               }
             });
           });

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Check, Crown, Zap, Shield, Star, Sparkles, ArrowLeft } from 'lucide-react';
 import { useProMode } from '../context/ProModeContext';
 import { cn } from './Layout';
+import { auth } from '../firebase';
 
 export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
   const { isPro } = useProMode();
@@ -148,6 +149,7 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
+                          'x-user-email': auth.currentUser?.email || '',
                         },
                       });
                       const data = await response.json();
