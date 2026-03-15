@@ -120,6 +120,8 @@ export async function generateThumbnail(prompt: string, referenceImage?: string)
       {
         text: `Generate a professional, high-quality, high-contrast YouTube thumbnail. It should be eye-catching and designed for high CTR. Style: Modern, vibrant, clean. 
         
+CRITICAL INSTRUCTION FOR IDENTITY: You are provided with a reference image. You MUST use this reference image as the definitive source for the person's identity. Do not alter the facial features, appearance, or identity of the person in the reference image. The person in the generated thumbnail MUST be identical to the person in the reference image. If you are generating multiple images (e.g., 16:9 and 9:16), the person in ALL generated images MUST be identical to the person in the reference image. If the prompt mentions a specific public figure (e.g., a Senegalese wrestler or politician), ensure the generated image is a precise and accurate representation of that specific person, maintaining consistency with the reference image.
+
 CRITICAL INSTRUCTION FOR TEXT: If the prompt asks for text on the image, you MUST spell it EXACTLY as requested. Pay extreme attention to spelling. DO NOT add extra letters, typos, or gibberish. Keep the text large, bold, and perfectly legible.
 
 Prompt: ${prompt}`,
@@ -370,7 +372,13 @@ export async function analyzeVideoSEO(title: string, description: string, tags: 
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Agissez en tant qu'expert en SEO YouTube. Analysez les métadonnées vidéo suivantes et fournissez un score SEO (0-100), des recommandations exploitables EN FRANÇAIS, et une version hautement optimisée des métadonnées qui obtiendrait un score de 95+ EN FRANÇAIS. ${proPrompt}
+      contents: `Agissez en tant qu'expert en SEO YouTube, avec une expertise approfondie dans le contexte culturel et linguistique du Sénégal. Analysez les métadonnées vidéo suivantes.
+
+VOUS DEVEZ COMPRENDRE ET ANALYSER LE WOLOF. Si le titre, la description ou les tags contiennent des mots en Wolof, vous devez les interpréter correctement dans leur contexte culturel.
+
+VOUS DEVEZ ÉGALEMENT COMPRENDRE LES ENJEUX SPÉCIFIQUES À LA LUTTE SÉNÉGALAISE ET À LA POLITIQUE SÉNÉGALAISE. Appliquez cette connaissance pour optimiser le SEO, car ces sujets ont des dynamiques d'engagement très particulières.
+
+Fournissez un score SEO (0-100), des recommandations exploitables EN FRANÇAIS, et une version hautement optimisée des métadonnées qui obtiendrait un score de 95+ EN FRANÇAIS. ${proPrompt}
       
       TITRE: ${safeTitle}
       DESCRIPTION: ${safeDescription}

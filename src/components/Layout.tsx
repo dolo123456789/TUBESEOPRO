@@ -180,7 +180,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8 z-0">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-8 z-0 animate-in fade-in duration-500">
           <div className="mx-auto max-w-7xl">
             {children}
           </div>

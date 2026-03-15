@@ -56,14 +56,20 @@ async function startServer() {
 
     if (userData.isBanned) {
       await logSecurityAction(email, ipAddress, "CONNECTION_ATTEMPT", "Banned user access attempt");
-      return res.status(403).json({ error: "Account banned." });
+      return res.status(403).json({ 
+        error: "Account banned.",
+        message: "Your account has been banned due to security policy violations. Please contact support at adjisanoudolo1@gmail.com for assistance."
+      });
     }
 
     if (userData.ipAddress && userData.ipAddress !== ipAddress) {
       // IP mismatch, ban user
       await userDoc.ref.update({ isBanned: true });
       await logSecurityAction(email, ipAddress, "CONNECTION_ATTEMPT", "Banned due to IP mismatch");
-      return res.status(403).json({ error: "Account banned due to IP mismatch." });
+      return res.status(403).json({ 
+        error: "Account banned due to IP mismatch.",
+        message: "Your account has been banned due to security policy violations (IP mismatch). Please contact support at adjisanoudolo1@gmail.com for assistance."
+      });
     }
 
     // Update last login

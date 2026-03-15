@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp, Users, Search, Video, Eye, MousePointerClick, Tag, X, CheckCircle2, AlertCircle, PieChart, Activity, Info, Loader2, Wand2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
+import { cn } from './Layout';
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey: apiKey || '' });
@@ -214,15 +215,18 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { title: 'Total Views', value: timeRange === '7' ? '2.4M' : '10.2M', icon: Video, trend: '+12.5%', color: 'indigo' },
-          { title: 'Subscribers', value: timeRange === '7' ? '142K' : '158K', icon: Users, trend: '+4.2%', color: 'emerald' },
-          { title: 'Avg. SEO Score', value: '84/100', icon: Search, trend: '+2.1%', color: 'amber' },
-          { title: 'Viral Potential', value: 'High', icon: TrendingUp, trend: 'Stable', color: 'violet' },
+          { title: 'Total Views', value: timeRange === '7' ? '2.4M' : '10.2M', icon: Video, trend: '+12.5%', color: 'indigo', span: 'lg:col-span-1' },
+          { title: 'Subscribers', value: timeRange === '7' ? '142K' : '158K', icon: Users, trend: '+4.2%', color: 'emerald', span: 'lg:col-span-1' },
+          { title: 'Avg. SEO Score', value: '84/100', icon: Search, trend: '+2.1%', color: 'amber', span: 'lg:col-span-1' },
+          { title: 'Viral Potential', value: 'High', icon: TrendingUp, trend: 'Stable', color: 'violet', span: 'lg:col-span-1' },
         ].map((stat) => (
           <div 
             key={stat.title} 
             onClick={() => setSelectedStat(stat.title)}
-            className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 cursor-pointer"
+            className={cn(
+              "group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 cursor-pointer",
+              stat.span
+            )}
           >
             <div className={`absolute top-0 right-0 -mr-4 -mt-4 h-24 w-24 rounded-full bg-${stat.color}-500/5 blur-2xl group-hover:bg-${stat.color}-500/10 transition-colors`} />
             
