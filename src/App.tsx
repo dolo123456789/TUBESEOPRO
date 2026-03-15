@@ -19,6 +19,7 @@ import { ProfileView } from './components/ProfileView';
 import { PricingView } from './components/PricingView';
 import { FAQPage } from './components/FAQPage';
 import { PolicyPage } from './components/PolicyPage';
+import { SettingsView } from './components/SettingsView';
 import { ThemeProvider } from './context/ThemeContext';
 import { ProModeProvider } from './context/ProModeContext';
 import { SearchProvider } from './context/SearchContext';
@@ -45,6 +46,7 @@ export default function App() {
             {activeTab === 'pricing' && <PricingView setActiveTab={setActiveTab} />}
             {activeTab === 'faq' && <FAQPage />}
             {activeTab === 'policy' && <PolicyPage />}
+            {activeTab === 'settings' && <SettingsView />}
           </Layout>
         </SearchProvider>
       </ProModeProvider>

@@ -9,12 +9,18 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
     function isAdmin() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "adjisanoudolo1@gmail.com" && request.auth.token.email_verified == true));
     }
 
     match /users/{userId} {
       allow read, update: if isOwner(userId) || isAdmin();
       allow create: if isAuthenticated();
+    }
+
+    match /app_config/{configId} {
+      allow read, write: if isAdmin();
     }
 
     match /securityLogs/{logId} {

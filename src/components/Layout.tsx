@@ -18,7 +18,8 @@ import {
   Shield,
   Bot,
   ClipboardCheck,
-  LogOut
+  LogOut,
+  Settings
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -50,6 +51,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
     { name: 'Traffic Analyzer', id: 'traffic', icon: BarChart3 },
     { name: 'Growth Simulator', id: 'simulator', icon: Bot },
     { name: 'SEO Checklist', id: 'checklist', icon: ClipboardCheck },
+    { name: 'Configuration', id: 'settings', icon: Settings },
     { name: 'Mon Profil', id: 'profile', icon: User },
     { name: 'Tarifs', id: 'pricing', icon: CreditCard },
     { name: 'FAQ', id: 'faq', icon: HelpCircle },
