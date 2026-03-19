@@ -20,7 +20,8 @@ import {
   ClipboardCheck,
   LogOut,
   Settings,
-  LogIn
+  LogIn,
+  Gavel
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -77,7 +78,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
     { name: 'Mots-clés', id: 'keyword', icon: Search },
     { name: 'Analyseur Vidéo', id: 'video', icon: Video },
     { name: 'Générateur de Tags', id: 'tags', icon: Tags },
-    { name: 'Vidéos Tendances', id: 'trending', icon: TrendingUp },
+    { name: 'Prédictions Politiques', id: 'predictions', icon: Gavel },
     { name: 'Analyseur de Trafic', id: 'traffic', icon: BarChart3 },
     { name: 'Simulateur de Croissance', id: 'simulator', icon: Bot },
     { name: 'Checklist SEO', id: 'checklist', icon: ClipboardCheck },

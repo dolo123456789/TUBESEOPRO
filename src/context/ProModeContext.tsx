@@ -19,12 +19,14 @@ export function ProModeProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('tube_seo_pro_status', status.toString());
   };
 
+  const value = React.useMemo(() => ({ 
+    isPro, 
+    toggleProMode: () => handleSetProMode(!isPro),
+    setProMode: handleSetProMode
+  }), [isPro]);
+
   return (
-    <ProModeContext.Provider value={{ 
-      isPro, 
-      toggleProMode: () => handleSetProMode(!isPro),
-      setProMode: handleSetProMode
-    }}>
+    <ProModeContext.Provider value={value}>
       {children}
     </ProModeContext.Provider>
   );

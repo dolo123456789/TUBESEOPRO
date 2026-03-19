@@ -9,8 +9,9 @@ const SearchContext = createContext<SearchContextType | undefined>(undefined);
 
 export const SearchProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [lastKeyword, setLastKeyword] = useState('');
+  const value = React.useMemo(() => ({ lastKeyword, setLastKeyword }), [lastKeyword]);
   return (
-    <SearchContext.Provider value={{ lastKeyword, setLastKeyword }}>
+    <SearchContext.Provider value={value}>
       {children}
     </SearchContext.Provider>
   );

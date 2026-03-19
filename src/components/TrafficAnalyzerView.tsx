@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BarChart3, Loader2, Search, TrendingUp, Users, Clock, Sparkles, Youtube, Crown, DollarSign, Activity, Globe, Eye, Target, Zap, Rocket, CheckCircle2 } from 'lucide-react';
+import { BarChart3, Loader2, Search, TrendingUp, Users, Clock, Sparkles, Youtube, Crown, DollarSign, Activity, Globe, Eye, Target, Zap, Rocket, CheckCircle2, RefreshCw } from 'lucide-react';
 import { analyzeTrafficSources, fetchChannelTopVideos, generateGrowthStrategy } from '../services/geminiService';
 import { useProMode } from '../context/ProModeContext';
 
@@ -300,7 +300,15 @@ export function TrafficAnalyzerView() {
                 </a>
               ))}
               {topVideos.length === 0 && (
-                <p className="text-sm text-slate-500 italic">Aucune vidéo trouvée.</p>
+                <div className="text-center py-8">
+                  <p className="text-sm text-slate-500 italic mb-4">Aucune vidéo trouvée.</p>
+                  <button 
+                    onClick={() => handleAnalyze()}
+                    className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-2 mx-auto"
+                  >
+                    <RefreshCw className="h-4 w-4" /> Réessayer l'analyse
+                  </button>
+                </div>
               )}
             </div>
           </div>

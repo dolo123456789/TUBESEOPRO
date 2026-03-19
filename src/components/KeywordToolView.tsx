@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Loader2, Info, Lock, X, List, Crown } from 'lucide-react';
+import { Search, Loader2, Info, Lock, X, List, Crown, RefreshCw } from 'lucide-react';
 import { generateKeywordData, generateBulkKeywordData } from '../services/geminiService';
 import { useSearchContext } from '../context/SearchContext';
 import { useProMode } from '../context/ProModeContext';
@@ -22,8 +22,8 @@ export function KeywordToolView() {
     }
   }, [isPro, isBulkMode]);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!keyword.trim()) return;
 
     setIsLoading(true);
@@ -469,7 +469,17 @@ export function KeywordToolView() {
                         <span className="text-blue-500 font-bold">{i + 1}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate mb-1">{video.title}</h4>
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{video.title}</h4>
+                          <a 
+                            href={video.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline shrink-0"
+                          >
+                            Voir
+                          </a>
+                        </div>
                         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
                           <span className="font-medium text-blue-500">{video.channel}</span>
                           <span>•</span>
@@ -481,7 +491,15 @@ export function KeywordToolView() {
                     </div>
                   ))}
                   {(!data.top_ranking_videos || data.top_ranking_videos.length === 0) && (
-                    <p className="text-center text-slate-500 py-4">Aucune vidéo trouvée pour ce mot-clé.</p>
+                    <div className="text-center py-8">
+                      <p className="text-slate-500 mb-4 italic">Aucune vidéo trouvée pour ce mot-clé.</p>
+                      <button 
+                        onClick={() => handleSearch()}
+                        className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-2 mx-auto"
+                      >
+                        <RefreshCw className="h-4 w-4" /> Réessayer l'analyse
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

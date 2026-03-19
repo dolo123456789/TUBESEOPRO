@@ -639,26 +639,29 @@ export async function generateOutlierData(query: string, type: string, isPro: bo
 }
 
 export async function fetchTrendingVideos(query: string, category: string = 'All', region: string = 'Global') {
-  const cacheKey = `trending_v3_${query}_${category}_${region}`;
+  const cacheKey = `trending_v4_${query}_${category}_${region}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Act as a YouTube analytics tool. Find 8 REAL, CURRENTLY TRENDING YouTube videos related to the topic: "${query}".
-    Category: ${category}
-    Region: ${region}
+    contents: `Agissez comme un expert en analyse de tendances YouTube (type YouTube Culture & Trends). Trouvez 8 vidéos YouTube RÉELLES et ACTUELLEMENT TENDANCES liées au sujet : "${query}".
+    Catégorie : ${category}
+    Région : ${region}
     
-    YOU MUST USE REAL, EXISTING YOUTUBE DATA. Use Google Search to find actual videos that are trending right now.
-    For each video, provide:
-    - title: The exact title of the trending video
-    - channel: REAL channel name
-    - views: String like '45M', '3.2M'
-    - growth: String like '+120%', '+85%'
-    - thumbnail: The direct URL to the YouTube video thumbnail
-    - tags: Array of 3 relevant tags
-    - viral_score: A score from 0-100 representing how viral this video is.
-    - video_url: The actual YouTube video URL.
+    VOUS DEVEZ UTILISER DES DONNÉES RÉELLES ET VÉRIDIQUES. Utilisez Google Search pour trouver des vidéos qui font le buzz en ce moment même (dernières 24-72 heures).
+    
+    Pour chaque vidéo, fournissez :
+    - title : Le titre exact de la vidéo.
+    - channel : Le nom RÉEL de la chaîne.
+    - views : Nombre de vues (ex: '1.2M', '450K').
+    - growth : Taux de croissance estimé (ex: '+150% en 24h').
+    - thumbnail : L'URL directe de la miniature YouTube (ex: https://i.ytimg.com/vi/VIDEO_ID/maxresdefault.jpg).
+    - tags : Tableau de 3 tags pertinents.
+    - viral_score : Un score de 0 à 100 représentant le potentiel viral.
+    - video_url : L'URL réelle de la vidéo YouTube au format standard (https://www.youtube.com/watch?v=ID). Assurez-vous que la vidéo autorise l'intégration.
+    - published_at : Date de publication relative (ex: 'Il y a 12 heures').
+    - trending_reason : Une phrase expliquant POURQUOI cette vidéo est tendance (ex: 'Nouveau record de vues', 'Sujet d'actualité brûlant', 'Collaboration majeure').
     
     RÉPONDEZ TOUJOURS EN FRANÇAIS.
     `,
@@ -677,9 +680,64 @@ export async function fetchTrendingVideos(query: string, category: string = 'All
             thumbnail: { type: Type.STRING },
             tags: { type: Type.ARRAY, items: { type: Type.STRING } },
             viral_score: { type: Type.NUMBER },
-            video_url: { type: Type.STRING }
+            video_url: { type: Type.STRING },
+            published_at: { type: Type.STRING },
+            trending_reason: { type: Type.STRING }
           },
-          required: ["title", "channel", "views", "growth", "thumbnail", "tags", "viral_score", "video_url"]
+          required: ["title", "channel", "views", "growth", "thumbnail", "tags", "viral_score", "video_url", "published_at", "trending_reason"]
+        }
+      }
+    }
+  });
+
+  const result = safeJsonParse(response.text, []);
+  if (result && result.length > 0) setCache(cacheKey, result);
+  return result;
+}
+
+export async function fetchPoliticalPredictions(forceRefresh: boolean = false) {
+  const cacheKey = `political_predictions_senegal_v1`;
+  if (!forceRefresh) {
+    const cached = getCache(cacheKey);
+    if (cached) return cached;
+  }
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3-flash-preview",
+    contents: `Agissez comme un analyste politique expert du Sénégal. Votre mission est de générer des prédictions "chocs" et percutantes à COURT TERME (prochains jours ou semaines) sur l'actualité politique au Sénégal.
+    
+    Ces prédictions doivent être basées sur une analyse fine des tendances actuelles, des discours, et du climat politique réel au Sénégal (pouvoir, opposition, société civile, enjeux économiques et sociaux). L'objectif est d'attirer des visiteurs sur une chaîne YouTube en proposant des angles d'analyse originaux, provocateurs et à impact immédiat (mais restant dans le domaine de l'analyse politique crédible).
+    
+    Pour chaque prédiction, fournissez :
+    - title : Un titre accrocheur et "choc" (ex: 'Le remaniement surprise ?', 'La nouvelle alliance de l'opposition').
+    - description : Une analyse détaillée de 3-4 phrases expliquant pourquoi cet événement pourrait se produire à très court terme.
+    - probability : Un pourcentage de probabilité (0-100%).
+    - impact_score : Un score d'impact sur la scène politique (0-100).
+    - key_actors : Les acteurs clés impliqués (ex: 'Gouvernement', 'Opposition', 'Syndicats', 'Acteurs internationaux').
+    - recommended_video_title : Un titre de vidéo YouTube optimisé pour le CTR basé sur cette prédiction.
+    - thumbnail_idea : Une idée de miniature visuelle pour cette vidéo.
+    - hashtags : 3-5 hashtags pertinents (ex: #Senegal #Politique #Actualite #Analyse).
+    
+    Générez 6 prédictions distinctes qui frappent fort.
+    RÉPONDEZ TOUJOURS EN FRANÇAIS.`,
+    config: {
+      tools: [{ googleSearch: {} }],
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            description: { type: Type.STRING },
+            probability: { type: Type.NUMBER },
+            impact_score: { type: Type.NUMBER },
+            key_actors: { type: Type.ARRAY, items: { type: Type.STRING } },
+            recommended_video_title: { type: Type.STRING },
+            thumbnail_idea: { type: Type.STRING },
+            hashtags: { type: Type.ARRAY, items: { type: Type.STRING } }
+          },
+          required: ["title", "description", "probability", "impact_score", "key_actors", "recommended_video_title", "thumbnail_idea", "hashtags"]
         }
       }
     }

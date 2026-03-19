@@ -10,7 +10,7 @@ import { DashboardView } from './components/DashboardView';
 import { KeywordToolView } from './components/KeywordToolView';
 import { VideoAnalyzerView } from './components/VideoAnalyzerView';
 import { TagGeneratorView } from './components/TagGeneratorView';
-import { TrendingVideosView } from './components/TrendingVideosView';
+import { PoliticalPredictionsView } from './components/PoliticalPredictionsView';
 import { TrafficAnalyzerView } from './components/TrafficAnalyzerView';
 import { GrowthSimulatorView } from './components/GrowthSimulatorView';
 import { SEOChecklistView } from './components/SEOChecklistView';
@@ -98,7 +98,7 @@ export default function App() {
               {activeTab === 'keyword' && <KeywordToolView />}
               {activeTab === 'video' && <VideoAnalyzerView />}
               {activeTab === 'tags' && <TagGeneratorView />}
-              {activeTab === 'trending' && <TrendingVideosView />}
+              {activeTab === 'predictions' && <PoliticalPredictionsView />}
               {activeTab === 'traffic' && <TrafficAnalyzerView />}
               {activeTab === 'simulator' && <GrowthSimulatorView />}
               {activeTab === 'checklist' && <SEOChecklistView />}
