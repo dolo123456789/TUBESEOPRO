@@ -19,6 +19,7 @@ import {
 import { fetchPoliticalPredictions } from '../services/geminiService';
 
 interface Prediction {
+  category: string;
   title: string;
   description: string;
   probability: number;
@@ -31,6 +32,7 @@ interface Prediction {
 
 const PredictionCard = React.memo(({ prediction }: { prediction: Prediction }) => {
   const [copied, setCopied] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -38,81 +40,126 @@ const PredictionCard = React.memo(({ prediction }: { prediction: Prediction }) =
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleCopyAll = () => {
+    const text = `TITRE: ${prediction.title}\n\nANALYSE: ${prediction.description}\n\nTITRE YOUTUBE: ${prediction.recommended_video_title}\n\nMINIATURE: ${prediction.thumbnail_idea}\n\nHASHTAGS: ${prediction.hashtags.join(' ')}`;
+    handleCopy(text);
+  };
+
   return (
-    <div className="bg-white dark:bg-[#1a1b20] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-xl transition-all duration-300 group">
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center gap-2 px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full text-xs font-bold uppercase tracking-wider">
-            <Zap className="h-3 w-3" />
-            Prédiction Choc
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Probabilité</p>
-              <p className="text-lg font-black text-indigo-600 dark:text-indigo-400">{prediction.probability}%</p>
+    <div className="bg-white dark:bg-[#1a1b20] rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden hover:shadow-2xl transition-all duration-500 group flex flex-col h-full">
+      <div className="p-6 flex-grow">
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100 dark:border-red-900/30 w-fit">
+              <Zap className="h-3 w-3 fill-current" />
+              Alerte Stratégique
             </div>
-            <div className="text-right">
-              <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Impact</p>
-              <p className="text-lg font-black text-amber-500">{prediction.impact_score}/100</p>
+            <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest px-1">
+              {prediction.category}
+            </span>
+          </div>
+          <button 
+            onClick={handleCopyAll}
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-indigo-600"
+            title="Copier tout le pack"
+          >
+            {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+          </button>
+        </div>
+
+        <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4 leading-tight group-hover:text-indigo-600 transition-colors">
+          {prediction.title}
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="space-y-1">
+            <div className="flex justify-between items-end">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Probabilité</span>
+              <span className="text-sm font-black text-indigo-600 dark:text-indigo-400">{prediction.probability}%</span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-indigo-600 transition-all duration-1000" 
+                style={{ width: `${prediction.probability}%` }}
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="flex justify-between items-end">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Impact</span>
+              <span className="text-sm font-black text-amber-500">{prediction.impact_score}/100</span>
+            </div>
+            <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-amber-500 transition-all duration-1000" 
+                style={{ width: `${prediction.impact_score}%` }}
+              />
             </div>
           </div>
         </div>
 
-        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3 group-hover:text-indigo-600 transition-colors">
-          {prediction.title}
-        </h3>
-        
-        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6">
+        <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed mb-6 font-medium">
           {prediction.description}
         </p>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div>
-            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-2 flex items-center gap-1">
-              <Users className="h-3 w-3" /> Acteurs Clés
+            <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-3 flex items-center gap-1.5">
+              <Users className="h-3 w-3" /> Cibles & Acteurs
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {prediction.key_actors.map((actor, idx) => (
-                <span key={idx} className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-md text-xs font-medium">
+                <span key={idx} className="px-2.5 py-1 bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 rounded-lg text-[10px] font-bold border border-slate-100 dark:border-slate-700">
                   {actor}
                 </span>
               ))}
             </div>
           </div>
 
-          <div className="p-4 bg-indigo-50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-900/30">
-            <div className="flex justify-between items-center mb-2">
-              <p className="text-[10px] text-indigo-600 dark:text-indigo-400 uppercase font-bold tracking-widest flex items-center gap-1">
-                <Target className="h-3 w-3" /> Titre YouTube Recommandé
+          <div className="p-4 bg-slate-50 dark:bg-slate-800/30 rounded-2xl border border-slate-100 dark:border-slate-700/50 group/yt">
+            <div className="flex justify-between items-center mb-3">
+              <p className="text-[10px] text-indigo-600 dark:text-indigo-400 uppercase font-black tracking-widest flex items-center gap-1.5">
+                <Target className="h-3 w-3" /> Hook YouTube
               </p>
               <button 
                 onClick={() => handleCopy(prediction.recommended_video_title)}
-                className="text-indigo-600 hover:text-indigo-700 transition-colors"
+                className="opacity-0 group-hover/yt:opacity-100 transition-opacity text-slate-400 hover:text-indigo-600"
               >
-                {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                <Copy className="h-3.5 w-3.5" />
               </button>
             </div>
-            <p className="text-sm font-bold text-slate-900 dark:text-white italic">
-              "{prediction.recommended_video_title}"
+            <p className="text-sm font-black text-slate-900 dark:text-white leading-snug">
+              {prediction.recommended_video_title}
             </p>
           </div>
 
-          <div>
-            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest mb-2 flex items-center gap-1">
-              <BarChart3 className="h-3 w-3" /> Idée de Miniature
-            </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400 italic bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
-              {prediction.thumbnail_idea}
-            </p>
-          </div>
+          <button 
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full py-2 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-indigo-600 transition-colors border-t border-slate-100 dark:border-slate-800 mt-2"
+          >
+            {isExpanded ? 'Masquer les détails' : 'Voir le concept visuel'}
+          </button>
 
-          <div className="flex flex-wrap gap-2 pt-2">
-            {prediction.hashtags.map((tag, idx) => (
-              <span key={idx} className="text-xs font-bold text-indigo-500 hover:text-indigo-600 cursor-pointer">
-                {tag}
-              </span>
-            ))}
-          </div>
+          {isExpanded && (
+            <div className="animate-in slide-in-from-top-2 duration-300 space-y-4 pt-2">
+              <div>
+                <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-2 flex items-center gap-1.5">
+                  <BarChart3 className="h-3 w-3" /> Direction Artistique
+                </p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 italic bg-amber-50/30 dark:bg-amber-900/5 p-3 rounded-xl border border-amber-100/50 dark:border-amber-900/20">
+                  {prediction.thumbnail_idea}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {prediction.hashtags.map((tag, idx) => (
+                  <span key={idx} className="text-[10px] font-black text-indigo-500/70 hover:text-indigo-600 transition-colors uppercase tracking-wider">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -140,6 +187,18 @@ export function PoliticalPredictionsView() {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('Tous');
+
+  const categories = useMemo(() => {
+    const cats = ['Tous', ...new Set(predictions.map(p => p.category))];
+    return cats;
+  }, [predictions]);
+
+  const filteredPredictions = useMemo(() => {
+    if (selectedCategory === 'Tous') return predictions;
+    return predictions.filter(p => p.category === selectedCategory);
+  }, [predictions, selectedCategory]);
 
   const loadPredictions = useCallback(async (forceRefresh: boolean = false) => {
     setIsLoading(true);
@@ -147,6 +206,7 @@ export function PoliticalPredictionsView() {
     try {
       const data = await fetchPoliticalPredictions(forceRefresh);
       setPredictions(data);
+      setLastUpdated(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }));
     } catch (err) {
       console.error('Error loading predictions:', err);
       setError('Impossible de charger les prédictions politiques. Veuillez réessayer.');
@@ -175,14 +235,21 @@ export function PoliticalPredictionsView() {
           </p>
         </div>
         
-        <button 
-          onClick={() => loadPredictions(true)}
-          disabled={isLoading}
-          className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-6 py-3 rounded-xl font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm disabled:opacity-50"
-        >
-          <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
-          Actualiser les Analyses
-        </button>
+        <div className="flex flex-col items-end gap-2">
+          <button 
+            onClick={() => loadPredictions(true)}
+            disabled={isLoading}
+            className="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-6 py-3 rounded-xl font-black uppercase tracking-widest text-xs hover:scale-105 transition-all shadow-xl disabled:opacity-50 active:scale-95"
+          >
+            <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+            Actualiser les Analyses
+          </button>
+          {lastUpdated && !isLoading && (
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Dernière mise à jour : {lastUpdated}
+            </span>
+          )}
+        </div>
       </div>
 
       {error && (
@@ -192,11 +259,28 @@ export function PoliticalPredictionsView() {
         </div>
       )}
 
+      <div className="flex flex-wrap gap-2 mb-4">
+        {categories.map(cat => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={cn(
+              "px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+              selectedCategory === cat 
+                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-500/20" 
+                : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:border-indigo-300"
+            )}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
           Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
         ) : (
-          predictions.map((prediction, idx) => (
+          filteredPredictions.map((prediction, idx) => (
             <PredictionCard key={idx} prediction={prediction} />
           ))
         )}

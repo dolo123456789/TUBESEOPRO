@@ -709,6 +709,7 @@ export async function fetchPoliticalPredictions(forceRefresh: boolean = false) {
     Ces prédictions doivent être basées sur une analyse fine des tendances actuelles, des discours, et du climat politique réel au Sénégal (pouvoir, opposition, société civile, enjeux économiques et sociaux). L'objectif est d'attirer des visiteurs sur une chaîne YouTube en proposant des angles d'analyse originaux, provocateurs et à impact immédiat (mais restant dans le domaine de l'analyse politique crédible).
     
     Pour chaque prédiction, fournissez :
+    - category : Une catégorie parmi ['Gouvernance', 'Opposition', 'Économie', 'Social', 'International', 'Justice'].
     - title : Un titre accrocheur et "choc" (ex: 'Le remaniement surprise ?', 'La nouvelle alliance de l'opposition').
     - description : Une analyse détaillée de 3-4 phrases expliquant pourquoi cet événement pourrait se produire à très court terme.
     - probability : Un pourcentage de probabilité (0-100%).
@@ -728,6 +729,7 @@ export async function fetchPoliticalPredictions(forceRefresh: boolean = false) {
         items: {
           type: Type.OBJECT,
           properties: {
+            category: { type: Type.STRING },
             title: { type: Type.STRING },
             description: { type: Type.STRING },
             probability: { type: Type.NUMBER },
@@ -737,7 +739,7 @@ export async function fetchPoliticalPredictions(forceRefresh: boolean = false) {
             thumbnail_idea: { type: Type.STRING },
             hashtags: { type: Type.ARRAY, items: { type: Type.STRING } }
           },
-          required: ["title", "description", "probability", "impact_score", "key_actors", "recommended_video_title", "thumbnail_idea", "hashtags"]
+          required: ["category", "title", "description", "probability", "impact_score", "key_actors", "recommended_video_title", "thumbnail_idea", "hashtags"]
         }
       }
     }
