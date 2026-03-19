@@ -1,8 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Search, Loader2, Info, Lock, X, List, Crown, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Search, Loader2, Info, Lock, X, List, Crown, History, Download, Globe, ArrowUpDown, ExternalLink, Play } from 'lucide-react';
 import { generateKeywordData, generateBulkKeywordData } from '../services/geminiService';
 import { useSearchContext } from '../context/SearchContext';
 import { useProMode } from '../context/ProModeContext';
+
+const REGIONS = [
+  { id: 'Global', name: 'Global', flag: '🌐' },
+  { id: 'Sénégal', name: 'Sénégal', flag: '🇸🇳' },
+  { id: 'France', name: 'France', flag: '🇫🇷' },
+  { id: 'États-Unis', name: 'États-Unis', flag: '🇺🇸' },
+  { id: 'Côte d\'Ivoire', name: 'Côte d\'Ivoire', flag: '🇨🇮' },
+  { id: 'Mali', name: 'Mali', flag: '🇲🇱' },
+];
 
 export function KeywordToolView() {
   const [keyword, setKeyword] = useState('');
@@ -12,8 +21,19 @@ export function KeywordToolView() {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
   const [isBulkMode, setIsBulkMode] = useState(false);
+  const [region, setRegion] = useState('Global');
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  
   const { isPro } = useProMode();
   const { setLastKeyword } = useSearchContext();
+
+  useEffect(() => {
+    const savedHistory = localStorage.getItem('tubeseo_keyword_history');
+    if (savedHistory) {
+      setSearchHistory(JSON.parse(savedHistory));
+    }
+  }, []);
 
   useEffect(() => {
     if (!isPro && isBulkMode) {
@@ -22,35 +42,97 @@ export function KeywordToolView() {
     }
   }, [isPro, isBulkMode]);
 
-  const handleSearch = async (e?: React.FormEvent) => {
+  const addToHistory = (kw: string) => {
+    const newHistory = [kw, ...searchHistory.filter(h => h !== kw)].slice(0, 10);
+    setSearchHistory(newHistory);
+    localStorage.setItem('tubeseo_keyword_history', JSON.stringify(newHistory));
+  };
+
+  const handleSearch = async (e?: React.FormEvent, searchKw?: string) => {
     if (e) e.preventDefault();
-    if (!keyword.trim()) return;
+    const targetKw = searchKw || keyword;
+    if (!targetKw.trim()) return;
 
     setIsLoading(true);
     setError('');
     try {
       if (isBulkMode) {
-        const keywordsList = keyword.split('\n').map(k => k.trim()).filter(k => k.length > 0);
+        const keywordsList = targetKw.split('\n').map(k => k.trim()).filter(k => k.length > 0);
         if (keywordsList.length > 20) {
           throw new Error("Veuillez entrer un maximum de 20 mots-clés pour la recherche en masse.");
         }
-        const result = await generateBulkKeywordData(keywordsList, isPro);
+        const result = await generateBulkKeywordData(keywordsList, isPro, region);
         setBulkData(result);
         setData(null);
-        setLastKeyword(keywordsList[0]); // Use first keyword as representative
+        setLastKeyword(keywordsList[0]);
+        keywordsList.forEach(k => addToHistory(k));
       } else {
-        const result = await generateKeywordData(keyword, isPro);
+        const result = await generateKeywordData(targetKw, isPro, region);
         setData(result);
         setBulkData(null);
-        setLastKeyword(keyword);
+        setLastKeyword(targetKw);
+        addToHistory(targetKw);
       }
       setActiveTab('overview');
+      if (searchKw) setKeyword(searchKw);
     } catch (err: any) {
       console.error(err);
       setError(err.message || "Échec de l'analyse du mot-clé. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const exportToCSV = () => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    
+    if (bulkData) {
+      csvContent += "Mot-cle,Volume,Concurrence,Score Global\n";
+      bulkData.forEach(item => {
+        csvContent += `"${item.keyword}","${item.search_volume}","${item.competition}",${item.overall_score}\n`;
+      });
+    } else if (data) {
+      csvContent += "Type,Mot-cle,Volume,Score\n";
+      data.related_keywords.forEach((item: any) => csvContent += `Associe,"${item.keyword}","${item.volume}",${item.score}\n`);
+      data.matching_terms.forEach((item: any) => csvContent += `Correspondant,"${item.keyword}","${item.volume}",${item.score}\n`);
+      data.questions.forEach((item: any) => csvContent += `Question,"${item.keyword}","${item.volume}",${item.score}\n`);
+    }
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `keywords_${keyword || 'export'}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleSort = (key: string) => {
+    let direction: 'asc' | 'desc' = 'desc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'desc') {
+      direction = 'asc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortedList = (list: any[]) => {
+    if (!sortConfig) return list;
+    return [...list].sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+      
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+      
+      const aStr = String(aValue).toLowerCase();
+      const bStr = String(bValue).toLowerCase();
+      
+      if (sortConfig.direction === 'asc') {
+        return aStr.localeCompare(bStr);
+      }
+      return bStr.localeCompare(aStr);
+    });
   };
 
   const clearSearch = () => {
@@ -72,12 +154,19 @@ export function KeywordToolView() {
   };
 
   const renderKeywordList = (list: any[], title: string, description: string, emptyMessage: string) => {
+    const sortedData = sortedList(list || []);
+    
     return (
       <div className="bg-white dark:bg-[#1a1b20] rounded-xl border border-slate-200 dark:border-slate-800 p-6 relative overflow-hidden">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-slate-900 dark:text-white font-bold flex items-center gap-2">
             {title} <Info className="h-4 w-4 text-slate-500" />
           </h3>
+          {isPro && list && list.length > 0 && (
+            <button onClick={exportToCSV} className="text-xs flex items-center gap-1 text-slate-500 hover:text-blue-500 transition-colors">
+              <Download className="h-3 w-3" /> Exporter
+            </button>
+          )}
         </div>
         
         {list && list.length > 0 ? (
@@ -85,15 +174,25 @@ export function KeywordToolView() {
             <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
               <thead className="text-xs text-slate-500 uppercase bg-slate-50 dark:bg-[#2a2b30]/50 border-b border-slate-200 dark:border-slate-800">
                 <tr>
-                  <th className="px-4 py-3 font-medium rounded-tl-lg">Mot-clé</th>
-                  <th className="px-4 py-3 font-medium">Volume</th>
-                  <th className="px-4 py-3 font-medium rounded-tr-lg">Score</th>
+                  <th onClick={() => handleSort('keyword')} className="px-4 py-3 font-medium rounded-tl-lg cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors">
+                    <div className="flex items-center gap-1">Mot-clé <ArrowUpDown className="h-3 w-3" /></div>
+                  </th>
+                  <th onClick={() => handleSort('volume')} className="px-4 py-3 font-medium cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors">
+                    <div className="flex items-center gap-1">Volume <ArrowUpDown className="h-3 w-3" /></div>
+                  </th>
+                  <th onClick={() => handleSort('score')} className="px-4 py-3 font-medium rounded-tr-lg cursor-pointer hover:text-slate-900 dark:hover:text-white transition-colors">
+                    <div className="flex items-center gap-1">Score <ArrowUpDown className="h-3 w-3" /></div>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {list.map((item, i) => (
+                {sortedData.map((item, i) => (
                   <tr key={i} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-[#2a2b30]/30 transition-colors">
-                    <td className="px-4 py-3 text-slate-900 dark:text-white font-medium">{item.keyword}</td>
+                    <td className="px-4 py-3 text-slate-900 dark:text-white font-medium">
+                      <button onClick={() => handleSearch(undefined, item.keyword)} className="hover:text-blue-500 transition-colors text-left">
+                        {item.keyword}
+                      </button>
+                    </td>
                     <td className="px-4 py-3">{item.volume}</td>
                     <td className={`px-4 py-3 font-bold ${getScoreColor(item.score)}`}>{item.score}</td>
                   </tr>
@@ -135,6 +234,48 @@ export function KeywordToolView() {
 
   return (
     <div className="bg-white dark:bg-[#0f1115] rounded-2xl p-6 shadow-xl text-slate-900 dark:text-white min-h-[80vh]">
+      {/* Region & History Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-slate-100 dark:bg-[#1a1b20] px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800">
+            <Globe className="h-4 w-4 text-slate-500" />
+            <select 
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+              className="bg-transparent border-0 text-xs font-bold focus:ring-0 outline-none cursor-pointer"
+            >
+              {REGIONS.map(r => (
+                <option key={r.id} value={r.id}>{r.flag} {r.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {searchHistory.length > 0 && (
+            <div className="flex items-center gap-2 overflow-x-auto hide-scrollbar max-w-[300px] sm:max-w-md">
+              <History className="h-4 w-4 text-slate-400 shrink-0" />
+              {searchHistory.map((h, i) => (
+                <button 
+                  key={i}
+                  onClick={() => handleSearch(undefined, h)}
+                  className="whitespace-nowrap bg-slate-100 dark:bg-[#1a1b20] hover:bg-slate-200 dark:hover:bg-[#2a2b30] text-[10px] font-bold px-2.5 py-1 rounded-full border border-slate-200 dark:border-slate-800 transition-colors"
+                >
+                  {h}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {isPro && (data || bulkData) && (
+          <button 
+            onClick={exportToCSV}
+            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-all shadow-lg shadow-emerald-600/20"
+          >
+            <Download className="h-4 w-4" /> Exporter CSV
+          </button>
+        )}
+      </div>
+
       {/* Search Bar */}
       <form onSubmit={handleSearch} className="relative mb-6">
         <div className="relative flex items-start bg-slate-100 dark:bg-[#1a1b20] rounded-xl border border-slate-200 dark:border-slate-800 focus-within:border-blue-500 transition-colors overflow-hidden">
@@ -464,42 +605,45 @@ export function KeywordToolView() {
                 </h3>
                 <div className="space-y-4">
                   {data.top_ranking_videos?.map((video: any, i: number) => (
-                    <div key={i} className="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-[#2a2b30]/30 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-800">
-                      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
-                        <span className="text-blue-500 font-bold">{i + 1}</span>
+                    <a 
+                      key={i} 
+                      href={video.video_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-[#2a2b30]/30 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-800 group"
+                    >
+                      <div className="relative w-32 aspect-video rounded-lg overflow-hidden shrink-0 shadow-md">
+                        <img 
+                          src={video.thumbnail_url} 
+                          alt={video.title} 
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors flex items-center justify-center">
+                          <Play className="h-6 w-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                        <div className="absolute bottom-1 right-1 bg-black/80 text-[10px] text-white px-1 rounded">
+                          {i + 1}
+                        </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate">{video.title}</h4>
-                          <a 
-                            href={video.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline shrink-0"
-                          >
-                            Voir
-                          </a>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                          <span className="font-medium text-blue-500">{video.channel}</span>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 mb-1 group-hover:text-blue-500 transition-colors">
+                          {video.title}
+                        </h4>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-500 dark:text-slate-400">
+                          <span className="font-bold text-blue-500 flex items-center gap-1">
+                            {video.channel} <ExternalLink className="h-2 w-2" />
+                          </span>
                           <span>•</span>
                           <span>{video.views} vues</span>
                           <span>•</span>
                           <span>{video.published}</span>
                         </div>
                       </div>
-                    </div>
+                    </a>
                   ))}
                   {(!data.top_ranking_videos || data.top_ranking_videos.length === 0) && (
-                    <div className="text-center py-8">
-                      <p className="text-slate-500 mb-4 italic">Aucune vidéo trouvée pour ce mot-clé.</p>
-                      <button 
-                        onClick={() => handleSearch()}
-                        className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-2 mx-auto"
-                      >
-                        <RefreshCw className="h-4 w-4" /> Réessayer l'analyse
-                      </button>
-                    </div>
+                    <p className="text-center text-slate-500 py-4">Aucune vidéo trouvée pour ce mot-clé.</p>
                   )}
                 </div>
               </div>

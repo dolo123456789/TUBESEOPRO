@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, Search, Video, Eye, MousePointerClick, Tag, X, CheckCircle2, AlertCircle, PieChart, Activity, Info, Loader2 } from 'lucide-react';
+import { TrendingUp, Users, Search, Video, Eye, MousePointerClick, Tag, X, CheckCircle2, AlertCircle, PieChart, Activity, Info, Loader2, History, Gavel, ArrowRight } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { cn } from './Layout';
+import { fetchPoliticalPredictions } from '../services/geminiService';
 
 const apiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : (import.meta as any).env?.VITE_GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey: apiKey || '' });
@@ -164,6 +165,28 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
   const [detailedAnalysis, setDetailedAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [keywordHistory, setKeywordHistory] = useState<string[]>([]);
+  const [latestPrediction, setLatestPrediction] = useState<any>(null);
+
+  useEffect(() => {
+    const history = localStorage.getItem('tubeseo_keyword_history');
+    if (history) {
+      setKeywordHistory(JSON.parse(history).slice(0, 5));
+    }
+
+    const loadLatestPrediction = async () => {
+      try {
+        const predictions = await fetchPoliticalPredictions();
+        if (predictions && predictions.length > 0) {
+          setLatestPrediction(predictions[0]);
+        }
+      } catch (err) {
+        console.error('Error loading prediction for dashboard:', err);
+      }
+    };
+    loadLatestPrediction();
+  }, []);
+
   const currentData = timeRange === '7' ? data7Days : data30Days;
 
   const handleAnalyze = async (title: string) => {
@@ -250,64 +273,124 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
-        <div className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Trafic {timeRange === '7' ? 'Hebdomadaire' : 'Mensuel'}</h3>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-indigo-500" />
-                <span className="text-xs font-medium text-slate-500">Vues</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-violet-500" />
-                <span className="text-xs font-medium text-slate-500">Abonnés</span>
+        <div className="lg:col-span-2 space-y-8">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Trafic {timeRange === '7' ? 'Hebdomadaire' : 'Mensuel'}</h3>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-indigo-500" />
+                  <span className="text-xs font-medium text-slate-500">Vues</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 rounded-full bg-violet-500" />
+                  <span className="text-xs font-medium text-slate-500">Abonnés</span>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="h-[340px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={currentData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
-                <XAxis 
-                  dataKey="name" 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} 
-                  dy={10}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false} 
-                  tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} 
-                />
-                <Tooltip 
-                  cursor={{ fill: 'transparent' }}
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      return (
-                        <div className="bg-white dark:bg-[#0f1115] border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-2xl">
-                          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{payload[0].payload.name}</p>
-                          <div className="space-y-1">
-                            {payload.map((p: any, i: number) => (
-                              <div key={i} className="flex items-center gap-4 justify-between">
-                                <div className="flex items-center gap-2">
-                                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} />
-                                  <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{p.name}</span>
+            <div className="h-[340px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={currentData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
+                  <XAxis 
+                    dataKey="name" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} 
+                    dy={10}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }} 
+                  />
+                  <Tooltip 
+                    cursor={{ fill: 'transparent' }}
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div className="bg-white dark:bg-[#0f1115] border border-slate-200 dark:border-slate-800 p-3 rounded-xl shadow-2xl">
+                            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{payload[0].payload.name}</p>
+                            <div className="space-y-1">
+                              {payload.map((p: any, i: number) => (
+                                <div key={i} className="flex items-center gap-4 justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-2 w-2 rounded-full" style={{ backgroundColor: p.color }} />
+                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{p.name}</span>
+                                  </div>
+                                  <span className="text-sm font-bold text-slate-900 dark:text-white">{p.value.toLocaleString()}</span>
                                 </div>
-                                <span className="text-sm font-bold text-slate-900 dark:text-white">{p.value.toLocaleString()}</span>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar dataKey="views" name="Vues" fill="#6366f1" radius={[6, 6, 0, 0]} barSize={timeRange === '7' ? 32 : 64} />
-                <Bar dataKey="subs" name="Abonnés" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={timeRange === '7' ? 32 : 64} />
-              </BarChart>
-            </ResponsiveContainer>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="views" name="Vues" fill="#6366f1" radius={[6, 6, 0, 0]} barSize={timeRange === '7' ? 32 : 64} />
+                  <Bar dataKey="subs" name="Abonnés" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={timeRange === '7' ? 32 : 64} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Keyword History & Strategic Summary */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <History className="h-4 w-4 text-slate-400" />
+                  Historique Mots-clés
+                </h3>
+                <button onClick={() => setActiveTab('keyword')} className="text-[10px] font-bold text-indigo-600 hover:underline">Voir tout</button>
+              </div>
+              <div className="space-y-2">
+                {keywordHistory.length > 0 ? (
+                  keywordHistory.map((kw, i) => (
+                    <button 
+                      key={i}
+                      onClick={() => setActiveTab('keyword')}
+                      className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-[#0f1115]/50 hover:bg-slate-100 dark:hover:bg-[#0f1115] transition-colors border border-slate-100 dark:border-slate-800/50 group"
+                    >
+                      <span className="text-xs font-medium text-slate-700 dark:text-slate-300 group-hover:text-indigo-600 transition-colors">{kw}</span>
+                      <ArrowRight className="h-3 w-3 text-slate-400 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-500 py-4 text-center italic">Aucun historique récent</p>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-indigo-600 to-violet-700 p-6 shadow-lg shadow-indigo-600/20 text-white">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-bold flex items-center gap-2">
+                  <Gavel className="h-4 w-4 text-indigo-200" />
+                  Flash Stratégique
+                </h3>
+                <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded">Sénégal</span>
+              </div>
+              {latestPrediction ? (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-black leading-tight">{latestPrediction.title}</h4>
+                  <p className="text-[11px] text-indigo-100 line-clamp-3 leading-relaxed opacity-90">
+                    {latestPrediction.description}
+                  </p>
+                  <button 
+                    onClick={() => setActiveTab('predictions')}
+                    className="w-full mt-2 py-2 bg-white text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-colors"
+                  >
+                    Voir l'analyse complète
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-4 text-center">
+                  <Loader2 className="h-6 w-6 animate-spin mb-2 opacity-50" />
+                  <p className="text-xs text-indigo-100">Chargement de l'analyse...</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

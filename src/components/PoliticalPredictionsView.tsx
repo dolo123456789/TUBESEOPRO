@@ -14,7 +14,10 @@ import {
   Flag,
   MessageSquare,
   BarChart3,
-  Gavel
+  Gavel,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus
 } from 'lucide-react';
 import { fetchPoliticalPredictions } from '../services/geminiService';
 
@@ -28,10 +31,12 @@ interface Prediction {
   recommended_video_title: string;
   thumbnail_idea: string;
   hashtags: string[];
+  trend?: 'up' | 'down' | 'stable';
 }
 
 const PredictionCard = React.memo(({ prediction }: { prediction: Prediction }) => {
   const [copied, setCopied] = useState(false);
+  const [shared, setShared] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const handleCopy = (text: string) => {
@@ -43,6 +48,28 @@ const PredictionCard = React.memo(({ prediction }: { prediction: Prediction }) =
   const handleCopyAll = () => {
     const text = `TITRE: ${prediction.title}\n\nANALYSE: ${prediction.description}\n\nTITRE YOUTUBE: ${prediction.recommended_video_title}\n\nMINIATURE: ${prediction.thumbnail_idea}\n\nHASHTAGS: ${prediction.hashtags.join(' ')}`;
     handleCopy(text);
+  };
+
+  const handleShare = () => {
+    if (navigator.share) {
+      navigator.share({
+        title: prediction.title,
+        text: `Analyse Stratégique Sénégal: ${prediction.title}\n\n${prediction.description}`,
+        url: window.location.href,
+      }).catch(console.error);
+    } else {
+      handleCopyAll();
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    }
+  };
+
+  const TrendIcon = () => {
+    switch (prediction.trend) {
+      case 'up': return <ArrowUpRight className="h-3 w-3 text-emerald-500" />;
+      case 'down': return <ArrowDownRight className="h-3 w-3 text-red-500" />;
+      default: return <Minus className="h-3 w-3 text-slate-400" />;
+    }
   };
 
   return (
@@ -58,13 +85,29 @@ const PredictionCard = React.memo(({ prediction }: { prediction: Prediction }) =
               {prediction.category}
             </span>
           </div>
-          <button 
-            onClick={handleCopyAll}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-indigo-600"
-            title="Copier tout le pack"
-          >
-            {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-          </button>
+          <div className="flex items-center gap-1">
+            <button 
+              onClick={handleShare}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-indigo-600"
+              title="Partager l'analyse"
+            >
+              {shared ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Share2 className="h-4 w-4" />}
+            </button>
+            <button 
+              onClick={handleCopyAll}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-indigo-600"
+              title="Copier tout le pack"
+            >
+              {copied ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 mb-2">
+          <TrendIcon />
+          <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+            {prediction.category}
+          </span>
         </div>
 
         <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-4 leading-tight group-hover:text-indigo-600 transition-colors">

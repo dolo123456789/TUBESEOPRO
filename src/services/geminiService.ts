@@ -206,8 +206,8 @@ Prompt: ${prompt}`,
     throw error;
   }
 }
-export async function generateKeywordData(keyword: string, isPro: boolean = false) {
-  const cacheKey = `keyword_v4_${keyword}_${isPro}`;
+export async function generateKeywordData(keyword: string, isPro: boolean = false, region: string = 'Global') {
+  const cacheKey = `keyword_v5_${keyword}_${isPro}_${region}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
@@ -223,14 +223,17 @@ export async function generateKeywordData(keyword: string, isPro: boolean = fals
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Agissez comme un outil d'expert en SEO YouTube comme vidIQ. Analysez le mot-clé : "${keyword}". Fournissez des données estimées réalistes pour le volume de recherche, le niveau de concurrence et un score SEO global (0-100).
-    VOUS DEVEZ UTILISER DES DONNÉES RÉELLES DE YOUTUBE. Utilisez Google Search pour trouver de vraies chaînes et vidéos classées pour ce mot-clé.
+    contents: `Agissez comme un outil d'expert en SEO YouTube comme vidIQ. Analysez le mot-clé : "${keyword}". 
+    Région cible : ${region}
+    
+    Fournissez des données estimées réalistes pour le volume de recherche, le niveau de concurrence et un score SEO global (0-100).
+    VOUS DEVEZ UTILISER DES DONNÉES RÉELLES DE YOUTUBE. Utilisez Google Search pour trouver de vraies chaînes et vidéos classées pour ce mot-clé dans la région spécifiée.
     
     Fournissez également des listes pour :
     1. Mots-clés associés (Related keywords)
     2. Termes correspondants (Matching terms)
     3. Questions (Des questions)
-    4. Top 3 des vidéos actuellement classées pour ce mot-clé (top_ranking_videos)
+    4. Top 5 des vidéos actuellement classées pour ce mot-clé (top_ranking_videos). Pour chaque vidéo, trouvez son URL réelle et son URL de miniature.
     
     ${proPrompt}
     
@@ -292,9 +295,11 @@ export async function generateKeywordData(keyword: string, isPro: boolean = fals
                 title: { type: Type.STRING },
                 channel: { type: Type.STRING },
                 views: { type: Type.STRING },
-                published: { type: Type.STRING }
+                published: { type: Type.STRING },
+                video_url: { type: Type.STRING },
+                thumbnail_url: { type: Type.STRING }
               },
-              required: ["title", "channel", "views", "published"]
+              required: ["title", "channel", "views", "published", "video_url", "thumbnail_url"]
             }
           }
         },
@@ -308,8 +313,8 @@ export async function generateKeywordData(keyword: string, isPro: boolean = fals
   return result;
 }
 
-export async function generateBulkKeywordData(keywords: string[], isPro: boolean = false) {
-  const cacheKey = `bulk_${keywords.join('_')}_${isPro}`;
+export async function generateBulkKeywordData(keywords: string[], isPro: boolean = false, region: string = 'Global') {
+  const cacheKey = `bulk_v2_${keywords.join('_')}_${isPro}_${region}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
@@ -324,7 +329,9 @@ export async function generateBulkKeywordData(keywords: string[], isPro: boolean
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `Agissez comme un outil d'expert en SEO YouTube comme vidIQ. Analysez la liste de mots-clés suivante : ${JSON.stringify(keywords)}. 
-    VOUS DEVEZ UTILISER DES DONNÉES RÉELLES DE YOUTUBE. Utilisez Google Search pour trouver de réelles tendances et données pour ces mots-clés.
+    Région cible : ${region}
+    
+    VOUS DEVEZ UTILISER DES DONNÉES RÉELLES DE YOUTUBE. Utilisez Google Search pour trouver de réelles tendances et données pour ces mots-clés dans la région spécifiée.
     Pour chaque mot-clé, fournissez des données estimées réalistes pour le volume de recherche, le niveau de concurrence et un score SEO global (0-100).
     ${proPrompt}
     
@@ -718,6 +725,7 @@ export async function fetchPoliticalPredictions(forceRefresh: boolean = false) {
     - recommended_video_title : Un titre de vidéo YouTube optimisé pour le CTR basé sur cette prédiction.
     - thumbnail_idea : Une idée de miniature visuelle pour cette vidéo.
     - hashtags : 3-5 hashtags pertinents (ex: #Senegal #Politique #Actualite #Analyse).
+    - trend : La tendance actuelle de cette prédiction ('up' pour une probabilité en hausse, 'down' pour une probabilité en baisse, 'stable' pour une probabilité stable).
     
     Générez 6 prédictions distinctes qui frappent fort.
     RÉPONDEZ TOUJOURS EN FRANÇAIS.`,
@@ -737,9 +745,10 @@ export async function fetchPoliticalPredictions(forceRefresh: boolean = false) {
             key_actors: { type: Type.ARRAY, items: { type: Type.STRING } },
             recommended_video_title: { type: Type.STRING },
             thumbnail_idea: { type: Type.STRING },
-            hashtags: { type: Type.ARRAY, items: { type: Type.STRING } }
+            hashtags: { type: Type.ARRAY, items: { type: Type.STRING } },
+            trend: { type: Type.STRING, description: "One of: 'up', 'down', 'stable'" }
           },
-          required: ["category", "title", "description", "probability", "impact_score", "key_actors", "recommended_video_title", "thumbnail_idea", "hashtags"]
+          required: ["category", "title", "description", "probability", "impact_score", "key_actors", "recommended_video_title", "thumbnail_idea", "hashtags", "trend"]
         }
       }
     }
