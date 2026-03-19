@@ -37,11 +37,7 @@ import { cn } from './Layout';
 export function SettingsView() {
   console.log("SettingsView rendering...");
   const [keys, setKeys] = useState({
-    master_key: '',
-    public_key: '',
-    private_key: '',
-    token: '',
-    mode: 'test' as 'test' | 'live'
+    gemini_api_key: '',
   });
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -93,55 +89,13 @@ export function SettingsView() {
 
   async function fetchKeys() {
     setIsLoading(true);
-    const path = 'app_config/paydunya';
-    console.log("Fetching keys from Firestore...");
-    try {
-      const docRef = doc(db, 'app_config', 'paydunya');
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        console.log("Keys found in Firestore:", Object.keys(data));
-        setKeys(prev => ({
-          master_key: data.master_key || prev.master_key,
-          public_key: data.public_key || prev.public_key,
-          private_key: data.private_key || prev.private_key,
-          token: data.token || prev.token,
-          mode: data.mode || prev.mode
-        }));
-      } else {
-        console.log("No keys found in Firestore at", path);
-      }
-    } catch (error) {
-      console.error("Error in fetchKeys:", error);
-      handleFirestoreError(error, OperationType.GET, path);
-    } finally {
-      setIsLoading(false);
-    }
+    // Paydunya keys removed
+    setIsLoading(false);
   }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Attempting to save keys...");
-    if (!user) {
-      setMessage({ type: 'error', text: 'Veuillez vous connecter pour enregistrer les clés.' });
-      return;
-    }
-
-    setIsSaving(true);
-    setMessage({ type: '', text: '' });
-    const path = 'app_config/paydunya';
-
-    try {
-      console.log("Saving to Firestore path:", path);
-      await setDoc(doc(db, 'app_config', 'paydunya'), keys);
-      console.log("Save successful!");
-      setMessage({ type: 'success', text: 'Clés Paydunya enregistrées avec succès !' });
-    } catch (error) {
-      console.error("Error in handleSave:", error);
-      handleFirestoreError(error, OperationType.WRITE, path);
-    } finally {
-      setIsSaving(false);
-    }
+    setMessage({ type: 'success', text: 'Paramètres enregistrés (simulé).' });
   };
 
   if (!user) {
@@ -179,101 +133,14 @@ export function SettingsView() {
             <div className="p-2 rounded-lg bg-indigo-500/10 text-indigo-600">
               <ShieldCheck className="h-6 w-6" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Clés Paydunya</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Paramètres Généraux</h3>
           </div>
 
+          <p className="text-slate-500 dark:text-slate-400 mb-6">
+            Les paramètres de paiement Paydunya ont été retirés. Contactez l'administrateur pour toute modification manuelle.
+          </p>
+
           <form onSubmit={handleSave} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Master Key</label>
-              <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input 
-                  type="password" 
-                  value={keys.master_key}
-                  onChange={(e) => setKeys({...keys, master_key: e.target.value})}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0f1115] text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                  placeholder="MASTER_KEY"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Public Key</label>
-              <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input 
-                  type="password" 
-                  value={keys.public_key}
-                  onChange={(e) => setKeys({...keys, public_key: e.target.value})}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0f1115] text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                  placeholder="PUBLIC_KEY"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Private Key</label>
-              <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input 
-                  type="password" 
-                  value={keys.private_key}
-                  onChange={(e) => setKeys({...keys, private_key: e.target.value})}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0f1115] text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                  placeholder="PRIVATE_KEY"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Token</label>
-              <div className="relative">
-                <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input 
-                  type="password" 
-                  value={keys.token}
-                  onChange={(e) => setKeys({...keys, token: e.target.value})}
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0f1115] text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                  placeholder="TOKEN"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Mode de paiement</label>
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setKeys({...keys, mode: 'test'})}
-                  className={cn(
-                    "flex-1 py-2 rounded-xl border font-bold transition-all",
-                    keys.mode === 'test' 
-                      ? "bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400"
-                      : "bg-white border-slate-200 text-slate-500 dark:bg-[#0f1115] dark:border-slate-800"
-                  )}
-                >
-                  Mode Test
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setKeys({...keys, mode: 'live'})}
-                  className={cn(
-                    "flex-1 py-2 rounded-xl border font-bold transition-all",
-                    keys.mode === 'live' 
-                      ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400"
-                      : "bg-white border-slate-200 text-slate-500 dark:bg-[#0f1115] dark:border-slate-800"
-                  )}
-                >
-                  Mode Live
-                </button>
-              </div>
-              <p className="text-[10px] text-slate-500 italic">
-                {keys.mode === 'test' 
-                  ? "Utilisez vos clés de test Paydunya pour simuler des paiements." 
-                  : "Attention : les paiements seront réels. Utilisez vos clés de production."}
-              </p>
-            </div>
-
             {message.text && (
               <div className={`p-4 rounded-xl text-sm font-medium flex items-center gap-2 ${
                 message.type === 'success' ? 'bg-emerald-50/50 dark:bg-emerald-900/10 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800' : 'bg-red-50/50 dark:bg-red-900/10 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-800'
@@ -290,7 +157,7 @@ export function SettingsView() {
                 className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-600/20 transition-all disabled:opacity-50"
               >
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                Enregistrer la configuration
+                Enregistrer les modifications
               </button>
             </div>
           </form>

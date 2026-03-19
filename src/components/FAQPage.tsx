@@ -4,16 +4,16 @@ import { HelpCircle } from 'lucide-react';
 export function FAQPage() {
   const faqs = [
     {
-      question: "How does TubeSEO Pro work?",
-      answer: "TubeSEO Pro uses advanced AI models to analyze your video metadata and compare it with real-time YouTube trends to provide actionable SEO insights."
+      question: "Comment fonctionne TubeSEO Pro ?",
+      answer: "TubeSEO Pro utilise des modèles d'IA avancés pour analyser les métadonnées de vos vidéos et les comparer aux tendances YouTube en temps réel afin de fournir des conseils SEO exploitables."
     },
     {
-      question: "Is it free to use?",
-      answer: "We offer a free tier with basic analysis features. For advanced features like A/B testing and competitor channel audits, we have a Pro subscription."
+      question: "Est-ce gratuit ?",
+      answer: "Nous proposons une version gratuite avec des fonctionnalités d'analyse de base. Pour les fonctionnalités avancées comme les tests A/B et les audits de chaînes concurrentes, nous proposons un abonnement Pro."
     },
     {
-      question: "Can I cancel my subscription?",
-      answer: "Yes, you can cancel your subscription at any time from your account settings."
+      question: "Puis-je annuler mon abonnement ?",
+      answer: "Oui, vous pouvez annuler votre abonnement à tout moment depuis les paramètres de votre compte."
     }
   ];
 
@@ -22,9 +22,9 @@ export function FAQPage() {
       <div className="text-center">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-center gap-2">
           <HelpCircle className="h-8 w-8 text-indigo-600" />
-          Frequently Asked Questions
+          Foire Aux Questions (FAQ)
         </h1>
-        <p className="text-slate-500 dark:text-slate-400">Everything you need to know about TubeSEO Pro.</p>
+        <p className="text-slate-500 dark:text-slate-400">Tout ce que vous devez savoir sur TubeSEO Pro.</p>
       </div>
       <div className="space-y-4">
         {faqs.map((faq, i) => (

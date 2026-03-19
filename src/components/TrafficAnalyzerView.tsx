@@ -59,14 +59,14 @@ export function TrafficAnalyzerView() {
       <div className="bg-white dark:bg-[#1a1b20] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <BarChart3 className="h-6 w-6 text-indigo-500" />
-          Traffic Analyzer & Growth Strategy
+          Analyseur de Trafic & Stratégie de Croissance
         </h1>
         <div className="flex gap-4 mb-4">
           <input
             type="text"
             value={channelName}
             onChange={(e) => setChannelName(e.target.value)}
-            placeholder="Enter YouTube Channel Name"
+            placeholder="Entrez le nom de la chaîne YouTube"
             className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0f1115] text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
           />
           <button
@@ -75,13 +75,13 @@ export function TrafficAnalyzerView() {
             className="px-6 py-2 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-2"
           >
             {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
-            Analyze
+            Analyser
           </button>
         </div>
 
         {history.length > 0 && (
           <div className="flex items-center gap-2 overflow-x-auto pb-2">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider shrink-0">Recent:</span>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider shrink-0">Récent :</span>
             {history.map((h, i) => (
               <button
                 key={i}
@@ -205,6 +205,66 @@ export function TrafficAnalyzerView() {
                   <p className="text-sm font-medium text-slate-900 dark:text-white">{analysis.engagement_metrics?.engagement_rate}</p>
                 </div>
               </div>
+              {analysis.engagement_metrics?.best_content_format && (
+                <div className="flex items-start gap-3">
+                  <Sparkles className="h-5 w-5 text-amber-500 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">Format Gagnant</p>
+                    <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{analysis.engagement_metrics.best_content_format}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Growth Trends & Niche Benchmarking */}
+          <div className="bg-white dark:bg-[#1a1b20] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-emerald-500" />
+              Tendances de Croissance
+            </h2>
+            <div className="space-y-4">
+              <div className="p-3 bg-slate-50 dark:bg-[#0f1115] rounded-xl border border-slate-100 dark:border-slate-800">
+                <p className="text-xs font-medium text-slate-500 uppercase mb-1">Trajectoire</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{analysis.growth_trends?.trajectory}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-[10px] font-medium text-slate-500 uppercase">Abonnés</p>
+                  <p className="text-xs font-bold text-emerald-600">{analysis.growth_trends?.subscriber_trend}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium text-slate-500 uppercase">Vues</p>
+                  <p className="text-xs font-bold text-blue-600">{analysis.growth_trends?.view_trend}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white dark:bg-[#1a1b20] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+              <Target className="h-5 w-5 text-indigo-500" />
+              Positionnement de Niche
+            </h2>
+            <div className="space-y-4">
+              <div className="p-3 bg-indigo-50/50 dark:bg-indigo-900/10 rounded-xl border border-indigo-100 dark:border-indigo-800/50">
+                <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase mb-1">Position sur le Marché</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{analysis.niche_benchmarking?.market_position}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase mb-2">Concurrents Directs</p>
+                <div className="flex flex-wrap gap-2">
+                  {analysis.niche_benchmarking?.competitors?.map((c: string, i: number) => (
+                    <span key={i} className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] font-medium">
+                      {c}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-slate-500 uppercase mb-1">Avantage Concurrentiel</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400 italic">{analysis.niche_benchmarking?.competitive_advantage}</p>
+              </div>
             </div>
           </div>
 
@@ -264,6 +324,16 @@ export function TrafficAnalyzerView() {
 
                   <p className="text-lg text-indigo-100 mb-8 font-medium leading-relaxed border-l-4 border-indigo-500 pl-4">{strategy.strategy_summary}</p>
                   
+                  {/* Content Pillars */}
+                  <div className="mb-8 grid gap-4 sm:grid-cols-3">
+                    {strategy.content_pillars?.map((pillar: string, i: number) => (
+                      <div key={i} className="bg-indigo-500/10 border border-indigo-500/20 p-4 rounded-xl">
+                        <p className="text-[10px] font-bold text-indigo-400 uppercase mb-1">Pilier {i + 1}</p>
+                        <p className="text-sm font-bold text-white leading-tight">{pillar}</p>
+                      </div>
+                    ))}
+                  </div>
+
                   <div className="space-y-8">
                     {strategy.perfect_roadmap?.map((phase: any, index: number) => (
                       <div key={index} className="relative pl-8 md:pl-0">
@@ -297,6 +367,22 @@ export function TrafficAnalyzerView() {
                         </div>
                       </div>
                     ))}
+                  </div>
+
+                  {/* Monetization Roadmap */}
+                  <div className="mt-8 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/20 rounded-2xl p-6">
+                    <h3 className="text-lg font-bold text-emerald-400 mb-4 flex items-center gap-2">
+                      <DollarSign className="h-5 w-5" />
+                      Roadmap de Monétisation
+                    </h3>
+                    <ul className="grid gap-3 sm:grid-cols-2">
+                      {strategy.monetization_roadmap?.map((item: string, i: number) => (
+                        <li key={i} className="flex items-start gap-3 text-emerald-100/90">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-1" />
+                          <span className="text-sm">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
 
                   <div className="mt-8 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-2xl p-6">

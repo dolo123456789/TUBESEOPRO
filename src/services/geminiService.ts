@@ -207,17 +207,19 @@ Prompt: ${prompt}`,
   }
 }
 export async function generateKeywordData(keyword: string, isPro: boolean = false) {
-  const cacheKey = `keyword_${keyword}_${isPro}`;
+  const cacheKey = `keyword_v4_${keyword}_${isPro}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
-  const proPrompt = isPro ? "En tant que fonctionnalité PRO, fournissez une estimation très précise du CPC (Coût par Clic) en USD, une tendance de recherche détaillée (En hausse, En baisse, Stable), et un 'pro_insight' qui est un conseil stratégique d'une phrase pour ce mot-clé." : "";
+  const proPrompt = isPro ? "En tant que fonctionnalité PRO, fournissez une estimation très précise du CPC (Coût par Clic) en USD, une tendance de recherche détaillée (En hausse, En baisse, Stable), et un 'pro_insight' qui est un conseil stratégique d'une phrase pour ce mot-clé. Ajoutez également une analyse de la 'difficulté' de classement (0-100) et pourquoi." : "";
   const proProperties = isPro ? {
     cpc: { type: Type.NUMBER, description: "Estimation du CPC en USD" },
     trend: { type: Type.STRING, description: "En hausse, En baisse, ou Stable" },
-    pro_insight: { type: Type.STRING, description: "Un conseil stratégique d'une phrase pour ce mot-clé" }
+    pro_insight: { type: Type.STRING, description: "Un conseil stratégique d'une phrase pour ce mot-clé" },
+    difficulty_score: { type: Type.NUMBER, description: "Difficulté de classement de 0 à 100" },
+    difficulty_reason: { type: Type.STRING, description: "Explication de la difficulté" }
   } : {};
-  const proRequired = isPro ? ["cpc", "trend", "pro_insight"] : [];
+  const proRequired = isPro ? ["cpc", "trend", "pro_insight", "difficulty_score", "difficulty_reason"] : [];
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -226,10 +228,10 @@ export async function generateKeywordData(keyword: string, isPro: boolean = fals
     
     Fournissez également des listes pour :
     1. Mots-clés associés (Related keywords)
-    2. Termes correspondants (Matching terms - mots-clés contenant la phrase exacte)
-    3. Questions (Des questions - questions contenant le mot-clé)
+    2. Termes correspondants (Matching terms)
+    3. Questions (Des questions)
+    4. Top 3 des vidéos actuellement classées pour ce mot-clé (top_ranking_videos)
     
-    Si le mot-clé est très long ou obscur, vous pouvez renvoyer des tableaux vides pour les listes afin de simuler un état "non trouvé".
     ${proPrompt}
     
     RÉPONDEZ TOUJOURS EN FRANÇAIS.`,
@@ -281,9 +283,22 @@ export async function generateKeywordData(keyword: string, isPro: boolean = fals
               },
               required: ["keyword", "volume", "score"]
             }
+          },
+          top_ranking_videos: {
+            type: Type.ARRAY,
+            items: {
+              type: Type.OBJECT,
+              properties: {
+                title: { type: Type.STRING },
+                channel: { type: Type.STRING },
+                views: { type: Type.STRING },
+                published: { type: Type.STRING }
+              },
+              required: ["title", "channel", "views", "published"]
+            }
           }
         },
-        required: ["overall_score", "score_label", "search_volume", "search_volume_trend", "competition", "competition_trend", "related_keywords", "matching_terms", "questions", ...proRequired]
+        required: ["overall_score", "score_label", "search_volume", "search_volume_trend", "competition", "competition_trend", "related_keywords", "matching_terms", "questions", "top_ranking_videos", ...proRequired]
       }
     }
   });
@@ -372,13 +387,16 @@ export async function analyzeVideoSEO(title: string, description: string, tags: 
 
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
-      contents: `Agissez en tant qu'expert en SEO YouTube, avec une expertise approfondie dans le contexte culturel et linguistique du Sénégal. Analysez les métadonnées vidéo suivantes.
+      contents: `Agissez en tant qu'expert en SEO YouTube de classe mondiale. Analysez les métadonnées vidéo suivantes.
+      
+      UTILISEZ GOOGLE SEARCH pour :
+      1. Identifier les vidéos les plus performantes actuellement sur ce sujet : "${safeTitle}".
+      2. Analyser les tendances de recherche actuelles pour les mots-clés liés à ce sujet.
+      3. Trouver des "mots-clés de niche" à fort volume et faible concurrence que l'utilisateur a pu manquer.
 
-VOUS DEVEZ COMPRENDRE ET ANALYSER LE WOLOF. Si le titre, la description ou les tags contiennent des mots en Wolof, vous devez les interpréter correctement dans leur contexte culturel.
-
-VOUS DEVEZ ÉGALEMENT COMPRENDRE LES ENJEUX SPÉCIFIQUES À LA LUTTE SÉNÉGALAISE ET À LA POLITIQUE SÉNÉGALAISE. Appliquez cette connaissance pour optimiser le SEO, car ces sujets ont des dynamiques d'engagement très particulières.
-
-Fournissez un score SEO (0-100), des recommandations exploitables EN FRANÇAIS, et une version hautement optimisée des métadonnées qui obtiendrait un score de 95+ EN FRANÇAIS. ${proPrompt}
+      VOUS DEVEZ ÉGALEMENT COMPRENDRE ET ANALYSER LE WOLOF SI PRÉSENT. Si le titre, la description ou les tags contiennent des mots en Wolof, vous devez les interpréter correctement dans leur contexte culturel (Sénégal).
+      
+      Fournissez un score SEO (0-100), des recommandations exploitables EN FRANÇAIS, et une version hautement optimisée des métadonnées qui obtiendrait un score de 95+ EN FRANÇAIS. ${proPrompt}
       
       TITRE: ${safeTitle}
       DESCRIPTION: ${safeDescription}
@@ -391,12 +409,21 @@ Fournissez un score SEO (0-100), des recommandations exploitables EN FRANÇAIS, 
       - Potentiel d'engagement estimé (20%)
       - Potentiel de volume de mots-clés (15%)
 
-      Fournissez également un 'thumbnail_prompt' : une description détaillée pour un générateur d'images IA afin de créer une miniature YouTube professionnelle, à fort contraste et très cliquable pour cette vidéo.
-      TRÈS IMPORTANT POUR LE THUMBNAIL_PROMPT : S'il y a du texte sur la miniature, il doit être TRÈS COURT (1 à 3 mots maximum). Vous devez insister dans le prompt pour que le générateur d'images orthographie ce texte PARFAITEMENT, SANS AUCUNE FAUTE.
+      Fournissez également :
+      - 'thumbnail_prompt' : une description ultra-détaillée pour un générateur d'images IA (comme Midjourney ou DALL-E). La description doit inclure :
+        1. Un sujet central fort avec une expression émotionnelle intense (surprise, choc, détermination).
+        2. Un arrière-plan contrasté et vibrant.
+        3. Des éléments visuels de "preuve" (flèches, cercles, graphiques en hausse).
+        4. Des instructions sur l'éclairage (cinématique, dramatique) et la composition (règle des tiers).
+        5. Du texte court et percutant (max 3 mots) à inclure sur l'image, avec des instructions de police grasse et lisible.
+      - 'competitor_insights' : ce que font les vidéos du top 3 que l'utilisateur ne fait pas.
+      - 'audience_retention_strategy' : comment structurer les 30 premières secondes pour maximiser la rétention.
+      - 'keyword_gap' : 3-5 mots-clés manquants cruciaux.
       
       TOUTES LES RECOMMANDATIONS ET LES TEXTES GÉNÉRÉS DOIVENT ÊTRE EN FRANÇAIS.
       `,
       config: {
+        tools: [{ googleSearch: {} }],
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -410,20 +437,23 @@ Fournissez un score SEO (0-100), des recommandations exploitables EN FRANÇAIS, 
               items: { type: Type.STRING },
               description: "List of 3-5 actionable recommendations to improve SEO"
             },
-            viral_potential: { type: Type.NUMBER, description: "Estimated viral potential 0-100 based on CTR and engagement factors" },
+            viral_potential: { type: Type.NUMBER, description: "Estimated viral potential 0-100" },
             thumbnail_prompt: { type: Type.STRING, description: "Detailed prompt for generating a thumbnail" },
+            competitor_insights: { type: Type.STRING, description: "Analysis of top competitors for this topic" },
+            audience_retention_strategy: { type: Type.STRING, description: "Tips for the first 30 seconds" },
+            keyword_gap: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Missing high-potential keywords" },
             optimized_metadata: {
               type: Type.OBJECT,
               properties: {
                 title: { type: Type.STRING, description: "A highly optimized, click-worthy title" },
-                description: { type: Type.STRING, description: "A highly optimized description with keywords and structure" },
-                tags: { type: Type.STRING, description: "A comma-separated list of highly optimized tags" }
+                description: { type: Type.STRING, description: "A highly optimized description" },
+                tags: { type: Type.STRING, description: "A comma-separated list of optimized tags" }
               },
               required: ["title", "description", "tags"]
             },
             ...proProperties
           },
-          required: ["seo_score", "title_score", "description_score", "tags_score", "recommendations", "viral_potential", "thumbnail_prompt", "optimized_metadata", ...proRequired]
+          required: ["seo_score", "title_score", "description_score", "tags_score", "recommendations", "viral_potential", "thumbnail_prompt", "competitor_insights", "audience_retention_strategy", "keyword_gap", "optimized_metadata", ...proRequired]
         }
       }
     });
@@ -440,7 +470,7 @@ Fournissez un score SEO (0-100), des recommandations exploitables EN FRANÇAIS, 
 export async function generateTags(topic: string) {
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Act as a YouTube tag generator. Generate 15 highly optimized, relevant YouTube tags for the topic: "${topic}". Order them from most relevant/broad to more specific long-tail keywords.`,
+    contents: `Agissez comme un générateur de tags YouTube. Générez 15 tags YouTube hautement optimisés et pertinents pour le sujet : "${topic}". Classez-les du plus pertinent/général aux mots-clés de longue traîne plus spécifiques. RÉPONDEZ TOUJOURS EN FRANÇAIS.`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
@@ -483,7 +513,10 @@ export async function analyzeCompetitorChannel(channelName: string) {
     7. Top 5 keywords they actually rank for
     8. Their 3 main strengths
     9. 3-5 actionable recommendations
-    10. The exact YouTube channel URL (channel_url). VERIFY THIS URL.`,
+    10. The exact YouTube channel URL (channel_url). VERIFY THIS URL.
+    11. A brief analysis of their niche (niche_analysis)
+    12. A suggested content strategy to compete with them (content_strategy)
+    `,
     config: {
       tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
@@ -499,9 +532,11 @@ export async function analyzeCompetitorChannel(channelName: string) {
           top_keywords: { type: Type.ARRAY, items: { type: Type.STRING } },
           strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
           recommendations: { type: Type.ARRAY, items: { type: Type.STRING } },
-          channel_url: { type: Type.STRING, description: "The verified working URL of the YouTube channel" }
+          channel_url: { type: Type.STRING, description: "The verified working URL of the YouTube channel" },
+          niche_analysis: { type: Type.STRING },
+          content_strategy: { type: Type.STRING }
         },
-        required: ["real_channel_name", "estimated_subscribers", "avg_views_per_video", "upload_frequency", "engagement_rate", "estimated_monthly_revenue", "top_keywords", "strengths", "recommendations", "channel_url"]
+        required: ["real_channel_name", "estimated_subscribers", "avg_views_per_video", "upload_frequency", "engagement_rate", "estimated_monthly_revenue", "top_keywords", "strengths", "recommendations", "channel_url", "niche_analysis", "content_strategy"]
       }
     }
   });
@@ -562,6 +597,8 @@ export async function generateOutlierData(query: string, type: string, isPro: bo
     - thumbnail_url: REAL YouTube thumbnail URL
     - video_url: REAL, VERIFIED YouTube video URL (e.g., https://www.youtube.com/watch?v=ID). TEST THIS URL.
     - channel_url: REAL, VERIFIED YouTube channel URL (e.g., https://www.youtube.com/@handle). TEST THIS URL.
+    
+    RÉPONDEZ TOUJOURS EN FRANÇAIS.
     `;
     schemaProperties = {
       title: { type: Type.STRING },
@@ -601,23 +638,29 @@ export async function generateOutlierData(query: string, type: string, isPro: bo
   return result;
 }
 
-export async function fetchTrendingVideos(query: string) {
-  const cacheKey = `trending_${query}`;
+export async function fetchTrendingVideos(query: string, category: string = 'All', region: string = 'Global') {
+  const cacheKey = `trending_v3_${query}_${category}_${region}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
-    contents: `Act as a YouTube analytics tool. Find 6 REAL, CURRENTLY TRENDING YouTube videos from TOP, HIGHLY POPULAR channels related to the topic: "${query}".
-    YOU MUST USE REAL, EXISTING YOUTUBE DATA. Use Google Search to find actual videos that are trending right now on top channels.
-    IF YOU CANNOT FIND REAL TRENDING DATA, RETURN AN EMPTY ARRAY.
+    contents: `Act as a YouTube analytics tool. Find 8 REAL, CURRENTLY TRENDING YouTube videos related to the topic: "${query}".
+    Category: ${category}
+    Region: ${region}
+    
+    YOU MUST USE REAL, EXISTING YOUTUBE DATA. Use Google Search to find actual videos that are trending right now.
     For each video, provide:
-    - title: The exact title of the trending video (REAL DATA)
-    - channel: REAL channel name (MUST BE A TOP, HIGHLY POPULAR CHANNEL)
-    - views: String like '45M', '3.2M' (Real stats for the video)
-    - growth: String like '+120%', '+85%' (Real growth stats for the channel)
-    - thumbnail: The direct URL to the YouTube video thumbnail (e.g., https://i.ytimg.com/vi/ID/maxresdefault.jpg). If not available, use a high-quality placeholder.
+    - title: The exact title of the trending video
+    - channel: REAL channel name
+    - views: String like '45M', '3.2M'
+    - growth: String like '+120%', '+85%'
+    - thumbnail: The direct URL to the YouTube video thumbnail
     - tags: Array of 3 relevant tags
+    - viral_score: A score from 0-100 representing how viral this video is.
+    - video_url: The actual YouTube video URL.
+    
+    RÉPONDEZ TOUJOURS EN FRANÇAIS.
     `,
     config: {
       tools: [{ googleSearch: {} }],
@@ -632,9 +675,11 @@ export async function fetchTrendingVideos(query: string) {
             views: { type: Type.STRING },
             growth: { type: Type.STRING },
             thumbnail: { type: Type.STRING },
-            tags: { type: Type.ARRAY, items: { type: Type.STRING } }
+            tags: { type: Type.ARRAY, items: { type: Type.STRING } },
+            viral_score: { type: Type.NUMBER },
+            video_url: { type: Type.STRING }
           },
-          required: ["title", "channel", "views", "growth", "thumbnail", "tags"]
+          required: ["title", "channel", "views", "growth", "thumbnail", "tags", "viral_score", "video_url"]
         }
       }
     }
@@ -646,28 +691,29 @@ export async function fetchTrendingVideos(query: string) {
 }
 
 export async function analyzeTrafficSources(channelName: string) {
-  const cacheKey = `traffic_v2_${channelName}`;
+  const cacheKey = `traffic_v3_${channelName}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
   const response = await ai.models.generateContent({
     model: "gemini-3.1-pro-preview",
-    contents: `Agissez comme un analyste de données YouTube expert (type SocialBlade / vidIQ). Analysez la chaîne YouTube SPÉCIFIQUE : "${channelName}".
-    VOUS DEVEZ UTILISER DES DONNÉES RÉELLES ET VÉRIDIQUES. Utilisez Google Search pour trouver les statistiques publiques réelles de "${channelName}" (vues mensuelles, abonnés, revenus estimés sur SocialBlade/NoxInfluencer).
+    contents: `Agissez comme un analyste de données YouTube expert de classe mondiale (type SocialBlade / vidIQ / Think with Google). Analysez la chaîne YouTube SPÉCIFIQUE : "${channelName}".
     
-    Puisque les sources de trafic exactes sont privées, vous devez faire une ESTIMATION TRÈS PRÉCISE ET RÉALISTE basée sur le type de contenu de la chaîne (ex: les tutoriels ont >60% de recherche, le divertissement a >70% de suggestions/navigation).
+    VOUS DEVEZ UTILISER DES DONNÉES RÉELLES ET VÉRIDIQUES. Utilisez Google Search pour trouver :
+    1. Les statistiques publiques réelles (vues mensuelles, abonnés, revenus estimés).
+    2. Les tendances de croissance récentes (30/90 derniers jours).
+    3. Les 3 principaux concurrents directs dans la même niche et comment cette chaîne se compare à eux.
+    4. Les types de contenu qui performent le mieux pour cette chaîne (Shorts vs Long-form).
+    
+    Puisque les sources de trafic exactes sont privées, vous devez faire une ESTIMATION TRÈS PRÉCISE ET ANALYTIQUE basée sur le type de contenu, les titres, et l'engagement (ex: les tutoriels ont >60% de recherche, le divertissement a >70% de suggestions/navigation).
     
     RÉPONDEZ EN FRANÇAIS.
     
-    Fournissez :
-    1. Vues mensuelles estimées (donnée réelle).
-    2. Revenus mensuels estimés (donnée réelle basée sur le RPM du marché).
-    3. Score d'autorité de la chaîne (0-100).
-    4. Le moteur de trafic principal (ex: "Recherche YouTube", "Fonctionnalités de navigation").
-    5. Géographie de l'audience (estimation basée sur la langue et le contenu).
-    6. Sources de trafic (estimations réalistes en % qui totalisent 100%).
-    7. Métriques d'engagement (Taux d'engagement réel estimé, Rétention estimée).
-    8. 3 recommandations ultra-spécifiques et actionnables pour cette chaîne exacte.`,
+    Fournissez une analyse complète incluant :
+    - Benchmarking de niche : Comparaison avec les leaders du secteur.
+    - Tendances de croissance : Analyse de la trajectoire actuelle.
+    - Démographie estimée : Âge et genre probables de l'audience.
+    - Analyse des sources de trafic détaillée.`,
     config: {
       tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
@@ -679,6 +725,24 @@ export async function analyzeTrafficSources(channelName: string) {
           channel_authority_score: { type: Type.NUMBER, description: "Score 0-100" },
           primary_traffic_driver: { type: Type.STRING },
           audience_geography: { type: Type.STRING },
+          growth_trends: {
+            type: Type.OBJECT,
+            properties: {
+              subscriber_trend: { type: Type.STRING, description: "Ex: '+15% ce mois-ci'" },
+              view_trend: { type: Type.STRING, description: "Ex: 'Stable mais en légère hausse'" },
+              trajectory: { type: Type.STRING, description: "Ex: 'Croissance exponentielle'" }
+            },
+            required: ["subscriber_trend", "view_trend", "trajectory"]
+          },
+          niche_benchmarking: {
+            type: Type.OBJECT,
+            properties: {
+              competitors: { type: Type.ARRAY, items: { type: Type.STRING } },
+              market_position: { type: Type.STRING, description: "Ex: 'Leader de niche', 'Challenger émergent'" },
+              competitive_advantage: { type: Type.STRING }
+            },
+            required: ["competitors", "market_position", "competitive_advantage"]
+          },
           traffic_sources: {
             type: Type.ARRAY,
             items: {
@@ -693,14 +757,15 @@ export async function analyzeTrafficSources(channelName: string) {
           engagement_metrics: {
             type: Type.OBJECT,
             properties: {
-              engagement_rate: { type: Type.STRING, description: "Ex: '4.5%'" },
-              estimated_retention: { type: Type.STRING, description: "Ex: '40-50%'" }
+              engagement_rate: { type: Type.STRING },
+              estimated_retention: { type: Type.STRING },
+              best_content_format: { type: Type.STRING, description: "Ex: 'Shorts éducatifs'" }
             },
-            required: ["engagement_rate", "estimated_retention"]
+            required: ["engagement_rate", "estimated_retention", "best_content_format"]
           },
           recommendations: { type: Type.ARRAY, items: { type: Type.STRING } }
         },
-        required: ["monthly_views_estimate", "monthly_revenue_estimate", "channel_authority_score", "primary_traffic_driver", "audience_geography", "traffic_sources", "engagement_metrics", "recommendations"]
+        required: ["monthly_views_estimate", "monthly_revenue_estimate", "channel_authority_score", "primary_traffic_driver", "audience_geography", "growth_trends", "niche_benchmarking", "traffic_sources", "engagement_metrics", "recommendations"]
       }
     }
   });
@@ -725,6 +790,8 @@ export async function fetchChannelTopVideos(channelName: string) {
     - views: Le nombre de vues RÉEL (ex: '4.2M vues').
     - url: L'URL réelle de la vidéo ou un lien de recherche pertinent.
     - published_date: La date ou l'année de publication (ex: 'Il y a 2 ans').
+    
+    RÉPONDEZ TOUJOURS EN FRANÇAIS.
     `,
     config: {
       tools: [{ googleSearch: {} }],
@@ -751,41 +818,45 @@ export async function fetchChannelTopVideos(channelName: string) {
 }
 
 export async function generateGrowthStrategy(channelName: string, analysis: any) {
-  const cacheKey = `strategy_v3_${channelName}`;
+  const cacheKey = `strategy_v4_${channelName}`;
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
   const response = await ai.models.generateContent({
     model: "gemini-3.1-pro-preview",
-    contents: `Agissez en tant que stratège YouTube d'élite mondial. En vous basant sur l'analyse de la chaîne "${channelName}": ${JSON.stringify(analysis)}, fournissez LA SOLUTION PARFAITE À SUIVRE (un plan d'action infaillible et étape par étape) pour faire exploser la croissance de la chaîne.
+    contents: `Agissez en tant que stratège YouTube d'élite mondial (type MrBeast Advisor / Derral Eves). En vous basant sur l'analyse approfondie de la chaîne "${channelName}": ${JSON.stringify(analysis)}, fournissez LA SOLUTION PARFAITE ET SUR-MESURE pour dominer sa niche.
     
     RÉPONDEZ EN FRANÇAIS.
     
-    La stratégie doit être structurée comme une feuille de route (roadmap) parfaite :
-    1. Un résumé percutant de la stratégie globale.
-    2. Une feuille de route en 3 phases (ex: Immédiat, Court terme, Long terme) avec des actions ultra-spécifiques.
-    3. La "Sauce Secrète" (1 ou 2 tactiques psychologiques ou de rétention très avancées).`,
+    La stratégie doit être une roadmap chirurgicale :
+    1. Résumé stratégique : La vision globale pour les 12 prochains mois.
+    2. Piliers de contenu : 3 thématiques ou formats spécifiques sur lesquels doubler la mise.
+    3. Roadmap en 3 phases : Actions concrètes, mesurables et chronométrées.
+    4. Stratégie de monétisation : Comment diversifier les revenus au-delà d'AdSense.
+    5. Tactiques de croissance "Hacker" : Astuces psychologiques, collaborations ciblées et optimisation de la rétention.`,
     config: {
       responseMimeType: "application/json",
       responseSchema: {
         type: Type.OBJECT,
         properties: {
           strategy_summary: { type: Type.STRING },
+          content_pillars: { type: Type.ARRAY, items: { type: Type.STRING }, description: "3 specific content themes to focus on" },
           perfect_roadmap: {
             type: Type.ARRAY,
             items: {
               type: Type.OBJECT,
               properties: {
-                phase_name: { type: Type.STRING, description: "Ex: Phase 1 : Optimisation Immédiate (Jours 1-7)" },
+                phase_name: { type: Type.STRING },
                 objective: { type: Type.STRING },
                 action_steps: { type: Type.ARRAY, items: { type: Type.STRING } }
               },
               required: ["phase_name", "objective", "action_steps"]
             }
           },
-          secret_sauce: { type: Type.ARRAY, items: { type: Type.STRING } }
+          monetization_roadmap: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Specific ways to monetize beyond AdSense" },
+          secret_sauce: { type: Type.ARRAY, items: { type: Type.STRING }, description: "Advanced psychological or growth hacking tactics" }
         },
-        required: ["strategy_summary", "perfect_roadmap", "secret_sauce"]
+        required: ["strategy_summary", "content_pillars", "perfect_roadmap", "monetization_roadmap", "secret_sauce"]
       }
     }
   });

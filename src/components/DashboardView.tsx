@@ -1,35 +1,35 @@
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, Search, Video, Eye, MousePointerClick, Tag, X, CheckCircle2, AlertCircle, PieChart, Activity, Info, Loader2, Wand2 } from 'lucide-react';
+import { TrendingUp, Users, Search, Video, Eye, MousePointerClick, Tag, X, CheckCircle2, AlertCircle, PieChart, Activity, Info, Loader2 } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { cn } from './Layout';
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const apiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : (import.meta as any).env?.VITE_GEMINI_API_KEY;
 const ai = new GoogleGenAI({ apiKey: apiKey || '' });
 
 const data7Days = [
-  { name: 'Mon', views: 4000, subs: 24 },
-  { name: 'Tue', views: 3000, subs: 13 },
-  { name: 'Wed', views: 2000, subs: 98 },
-  { name: 'Thu', views: 2780, subs: 39 },
-  { name: 'Fri', views: 1890, subs: 48 },
-  { name: 'Sat', views: 2390, subs: 38 },
-  { name: 'Sun', views: 3490, subs: 43 },
+  { name: 'Lun', views: 4000, subs: 24 },
+  { name: 'Mar', views: 3000, subs: 13 },
+  { name: 'Mer', views: 2000, subs: 98 },
+  { name: 'Jeu', views: 2780, subs: 39 },
+  { name: 'Ven', views: 1890, subs: 48 },
+  { name: 'Sam', views: 2390, subs: 38 },
+  { name: 'Dim', views: 3490, subs: 43 },
 ];
 
 const data30Days = [
-  { name: 'Week 1', views: 25000, subs: 150 },
-  { name: 'Week 2', views: 32000, subs: 210 },
-  { name: 'Week 3', views: 28000, subs: 180 },
-  { name: 'Week 4', views: 45000, subs: 320 },
+  { name: 'Semaine 1', views: 25000, subs: 150 },
+  { name: 'Semaine 2', views: 32000, subs: 210 },
+  { name: 'Semaine 3', views: 28000, subs: 180 },
+  { name: 'Semaine 4', views: 45000, subs: 320 },
 ];
 
-const recentAudits = [
+const recentAnalyses = [
   { 
-    title: 'How to Learn React in 2024', 
+    title: 'Comment apprendre React en 2024', 
     score: 92, 
     status: 'Excellent', 
-    date: '2h ago', 
+    date: 'Il y a 2h', 
     views: '125K', 
     ctr: '8.4%', 
     keyword: 'React 2024',
@@ -44,10 +44,10 @@ const recentAudits = [
     ]
   },
   { 
-    title: 'My Desk Setup Tour', 
+    title: 'Mon Tour de Bureau (Desk Setup)', 
     score: 68, 
-    status: 'Needs Work', 
-    date: '5h ago', 
+    status: 'À améliorer', 
+    date: 'Il y a 5h', 
     views: '12K', 
     ctr: '3.2%', 
     keyword: 'Desk Setup',
@@ -56,17 +56,17 @@ const recentAudits = [
     ],
     improvements: [
       "Le CTR est faible (3.2%). La miniature doit être plus lumineuse.",
-      "Le titre 'My Desk Setup Tour' est trop générique. Essayez 'My $5000 Minimalist Desk Setup Tour'."
+      "Le titre 'Mon Tour de Bureau' est trop générique. Essayez 'Mon Bureau Minimaliste à 5000€'."
     ]
   },
   { 
-    title: '10 Tips for Better Code', 
+    title: '10 Conseils pour un Meilleur Code', 
     score: 85, 
-    status: 'Good', 
-    date: '1d ago', 
+    status: 'Bon', 
+    date: 'Hier', 
     views: '45K', 
     ctr: '6.1%', 
-    keyword: 'Coding Tips',
+    keyword: 'Conseils Code',
     insights: [
       "Bonne rétention d'audience sur les 3 premières minutes.",
       "Les tags sont pertinents et bien choisis."
@@ -77,10 +77,10 @@ const recentAudits = [
     ]
   },
   { 
-    title: 'Why I Switched to Neovim', 
+    title: 'Pourquoi j\'ai changé pour Neovim', 
     score: 74, 
-    status: 'Fair', 
-    date: '2d ago', 
+    status: 'Moyen', 
+    date: 'Il y a 2j', 
     views: '89K', 
     ctr: '5.5%', 
     keyword: 'Neovim',
@@ -94,10 +94,10 @@ const recentAudits = [
     ]
   },
   { 
-    title: 'Mastering Tailwind CSS', 
+    title: 'Maîtriser Tailwind CSS', 
     score: 88, 
-    status: 'Good', 
-    date: '3d ago', 
+    status: 'Bon', 
+    date: 'Il y a 3j', 
     views: '210K', 
     ctr: '7.9%', 
     keyword: 'Tailwind CSS',
@@ -106,61 +106,61 @@ const recentAudits = [
       "Le titre est clair et promet une valeur immédiate."
     ],
     improvements: [
-      "Ajoutez des timestamps dans la description pour faciliter la navigation.",
+      "Ajoutez des chapitres dans la description pour faciliter la navigation.",
       "Répondez à plus de commentaires pour booster l'engagement."
     ]
   },
 ];
 
 const statDetails: Record<string, any> = {
-  'Total Views': {
-    title: 'Total Views Analysis',
-    description: 'Detailed breakdown of your channel views over the selected period.',
-    insights: ['Search traffic increased by 15%', 'Shorts are driving 40% of new views'],
+  'Vues Totales': {
+    title: 'Analyse des Vues Totales',
+    description: 'Répartition détaillée des vues de votre chaîne sur la période sélectionnée.',
+    insights: ['Le trafic de recherche a augmenté de 15%', 'Les Shorts génèrent 40% des nouvelles vues'],
     metrics: [
-      { label: 'YouTube Search', value: '45%' },
-      { label: 'Suggested Videos', value: '30%' },
-      { label: 'Browse Features', value: '15%' },
-      { label: 'External', value: '10%' }
+      { label: 'Recherche YouTube', value: '45%' },
+      { label: 'Vidéos suggérées', value: '30%' },
+      { label: 'Fonctionnalités de navigation', value: '15%' },
+      { label: 'Externe', value: '10%' }
     ]
   },
-  'Subscribers': {
-    title: 'Subscriber Growth',
-    description: 'Analysis of your audience acquisition and retention.',
-    insights: ['High conversion rate on tutorials', 'Lost 50 subs after the last vlog'],
+  'Abonnés': {
+    title: 'Croissance des Abonnés',
+    description: 'Analyse de l\'acquisition et de la rétention de votre audience.',
+    insights: ['Taux de conversion élevé sur les tutoriels', 'Perte de 50 abonnés après le dernier vlog'],
     metrics: [
-      { label: 'From Videos', value: '70%' },
-      { label: 'From Shorts', value: '25%' },
-      { label: 'From Channel Page', value: '5%' }
+      { label: 'Depuis les vidéos', value: '70%' },
+      { label: 'Depuis les Shorts', value: '25%' },
+      { label: 'Depuis la page de la chaîne', value: '5%' }
     ]
   },
-  'Avg. SEO Score': {
-    title: 'SEO Performance',
-    description: 'How well your videos are optimized for the YouTube algorithm.',
-    insights: ['Titles are perfectly optimized', 'Descriptions lack long-tail keywords'],
+  'Score SEO Moyen': {
+    title: 'Performance SEO',
+    description: 'Optimisation de vos vidéos pour l\'algorithme YouTube.',
+    insights: ['Les titres sont parfaitement optimisés', 'Les descriptions manquent de mots-clés de longue traîne'],
     metrics: [
-      { label: 'Title Optimization', value: '95/100' },
-      { label: 'Description Depth', value: '70/100' },
-      { label: 'Tag Relevance', value: '85/100' },
-      { label: 'Thumbnail CTR', value: '88/100' }
+      { label: 'Optimisation du Titre', value: '95/100' },
+      { label: 'Profondeur de la Description', value: '70/100' },
+      { label: 'Pertinence des Tags', value: '85/100' },
+      { label: 'CTR de la Miniature', value: '88/100' }
     ]
   },
-  'Viral Potential': {
-    title: 'Viral Velocity',
-    description: 'Metrics indicating the likelihood of your content going viral.',
-    insights: ['"React 2024" video is showing viral trajectory', 'High share rate on Twitter'],
+  'Potentiel Viral': {
+    title: 'Vélocité Virale',
+    description: 'Indicateurs de la probabilité que votre contenu devienne viral.',
+    insights: ['La vidéo "React 2024" montre une trajectoire virale', 'Taux de partage élevé sur Twitter'],
     metrics: [
-      { label: 'Share Rate', value: '4.2%' },
-      { label: 'Comment Velocity', value: '15/hr' },
-      { label: 'Avg. View Duration', value: '65%' },
-      { label: 'Click-Through Rate', value: '8.4%' }
+      { label: 'Taux de Partage', value: '4.2%' },
+      { label: 'Vélocité des Commentaires', value: '15/h' },
+      { label: 'Durée Moyenne de Visionnage', value: '65%' },
+      { label: 'Taux de Clic (CTR)', value: '8.4%' }
     ]
   }
 };
 
 export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
   const [timeRange, setTimeRange] = useState<'7' | '30'>('7');
-  const [selectedAudit, setSelectedAudit] = useState<typeof recentAudits[0] | null>(null);
+  const [selectedAnalysis, setSelectedAnalysis] = useState<typeof recentAnalyses[0] | null>(null);
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
   const [detailedAnalysis, setDetailedAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -171,12 +171,12 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-3-flash-preview',
-        contents: `Analyze the video titled "${title}" and provide 10 detailed tips for better code based on this topic.`,
+        contents: `Analysez la vidéo intitulée "${title}" et fournissez 10 conseils détaillés pour un meilleur code basés sur ce sujet. Répondez en français.`,
       });
-      setDetailedAnalysis(response.text || 'No analysis available.');
+      setDetailedAnalysis(response.text || 'Aucune analyse disponible.');
     } catch (error) {
-      console.error('Analysis error:', error);
-      setDetailedAnalysis('Error during analysis.');
+      console.error('Erreur d\'analyse :', error);
+      setDetailedAnalysis('Erreur lors de l\'analyse.');
     } finally {
       setIsAnalyzing(false);
     }
@@ -186,8 +186,8 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
     <div className="space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Performance Overview</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Real-time analytics for your YouTube channel.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Aperçu des Performances</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Analytique en temps réel pour votre chaîne YouTube.</p>
         </div>
         <div className="flex items-center gap-2 bg-white dark:bg-[#1a1b20] p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
           <button 
@@ -198,7 +198,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            Last 7 Days
+            7 derniers jours
           </button>
           <button 
             onClick={() => setTimeRange('30')}
@@ -208,17 +208,17 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                 : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             }`}
           >
-            Last 30 Days
+            30 derniers jours
           </button>
         </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { title: 'Total Views', value: timeRange === '7' ? '2.4M' : '10.2M', icon: Video, trend: '+12.5%', color: 'indigo', span: 'lg:col-span-1' },
-          { title: 'Subscribers', value: timeRange === '7' ? '142K' : '158K', icon: Users, trend: '+4.2%', color: 'emerald', span: 'lg:col-span-1' },
-          { title: 'Avg. SEO Score', value: '84/100', icon: Search, trend: '+2.1%', color: 'amber', span: 'lg:col-span-1' },
-          { title: 'Viral Potential', value: 'High', icon: TrendingUp, trend: 'Stable', color: 'violet', span: 'lg:col-span-1' },
+          { title: 'Vues Totales', value: timeRange === '7' ? '2.4M' : '10.2M', icon: Video, trend: '+12.5%', color: 'indigo', span: 'lg:col-span-1' },
+          { title: 'Abonnés', value: timeRange === '7' ? '142K' : '158K', icon: Users, trend: '+4.2%', color: 'emerald', span: 'lg:col-span-1' },
+          { title: 'Score SEO Moyen', value: '84/100', icon: Search, trend: '+2.1%', color: 'amber', span: 'lg:col-span-1' },
+          { title: 'Potentiel Viral', value: 'Élevé', icon: TrendingUp, trend: 'Stable', color: 'violet', span: 'lg:col-span-1' },
         ].map((stat) => (
           <div 
             key={stat.title} 
@@ -252,15 +252,15 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm">
           <div className="flex items-center justify-between mb-8">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{timeRange === '7' ? 'Weekly' : 'Monthly'} Traffic</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Trafic {timeRange === '7' ? 'Hebdomadaire' : 'Mensuel'}</h3>
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-indigo-500" />
-                <span className="text-xs font-medium text-slate-500">Views</span>
+                <span className="text-xs font-medium text-slate-500">Vues</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="h-3 w-3 rounded-full bg-violet-500" />
-                <span className="text-xs font-medium text-slate-500">Subscribers</span>
+                <span className="text-xs font-medium text-slate-500">Abonnés</span>
               </div>
             </div>
           </div>
@@ -304,8 +304,8 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                     return null;
                   }}
                 />
-                <Bar dataKey="views" name="Views" fill="#6366f1" radius={[6, 6, 0, 0]} barSize={timeRange === '7' ? 32 : 64} />
-                <Bar dataKey="subs" name="Subscribers" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={timeRange === '7' ? 32 : 64} />
+                <Bar dataKey="views" name="Vues" fill="#6366f1" radius={[6, 6, 0, 0]} barSize={timeRange === '7' ? 32 : 64} />
+                <Bar dataKey="subs" name="Abonnés" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={timeRange === '7' ? 32 : 64} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -313,14 +313,14 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
 
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Recent Audits</h3>
-            <button className="text-xs font-bold text-indigo-600 hover:text-indigo-500 transition-colors">View All</button>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Analyses Récentes</h3>
+            <button className="text-xs font-bold text-indigo-600 hover:text-indigo-500 transition-colors">Voir Tout</button>
           </div>
           <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
-            {recentAudits.map((video, i) => (
+            {recentAnalyses.map((video, i) => (
               <div 
                 key={i} 
-                onClick={() => setSelectedAudit(video)}
+                onClick={() => setSelectedAnalysis(video)}
                 className="group flex flex-col gap-2 border border-slate-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-[#0f1115]/50 rounded-xl p-4 hover:bg-slate-50 dark:hover:bg-[#0f1115] transition-colors cursor-pointer"
               >
                 <div className="flex items-start justify-between gap-3">
@@ -367,39 +367,39 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
               <div className="p-1.5 rounded-lg bg-indigo-500 text-white">
                 <TrendingUp className="h-4 w-4" />
               </div>
-              <p className="text-xs font-bold text-indigo-900 dark:text-indigo-300">AI Insight</p>
+              <p className="text-xs font-bold text-indigo-900 dark:text-indigo-300">Analyse IA</p>
             </div>
             <p className="text-xs text-indigo-700 dark:text-indigo-400 leading-relaxed">
-              Your "React 2024" video is performing 40% better than average. Consider making a follow-up video on Next.js to capitalize on the high CTR.
+              Votre vidéo "React 2024" performe 40% mieux que la moyenne. Envisagez de faire une vidéo de suivi sur Next.js pour capitaliser sur le CTR élevé.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Audit Details Modal */}
-      {selectedAudit && (
+      {/* Analysis Details Modal */}
+      {selectedAnalysis && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
           <div className="bg-white dark:bg-[#1a1b20] rounded-2xl shadow-2xl w-full max-w-2xl border border-slate-200 dark:border-slate-800 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-start justify-between p-6 border-b border-slate-100 dark:border-slate-800/50">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">{selectedAudit.title}</h2>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">{selectedAnalysis.title}</h2>
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                    selectedAudit.score >= 85 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
-                    selectedAudit.score >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
+                    selectedAnalysis.score >= 85 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
+                    selectedAnalysis.score >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
                     'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
                   }`}>
-                    Score: {selectedAudit.score}/100
+                    Score: {selectedAnalysis.score}/100
                   </span>
                 </div>
                 <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-                  <span className="flex items-center gap-1.5"><Eye className="h-4 w-4" /> {selectedAudit.views} vues</span>
-                  <span className="flex items-center gap-1.5"><MousePointerClick className="h-4 w-4" /> CTR: {selectedAudit.ctr}</span>
-                  <span className="flex items-center gap-1.5"><Tag className="h-4 w-4" /> {selectedAudit.keyword}</span>
+                  <span className="flex items-center gap-1.5"><Eye className="h-4 w-4" /> {selectedAnalysis.views} vues</span>
+                  <span className="flex items-center gap-1.5"><MousePointerClick className="h-4 w-4" /> CTR: {selectedAnalysis.ctr}</span>
+                  <span className="flex items-center gap-1.5"><Tag className="h-4 w-4" /> {selectedAnalysis.keyword}</span>
                 </div>
               </div>
               <button 
-                onClick={() => setSelectedAudit(null)}
+                onClick={() => setSelectedAnalysis(null)}
                 className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <X className="h-5 w-5" />
@@ -413,7 +413,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                   Points Forts (Insights)
                 </h3>
                 <ul className="space-y-2">
-                  {selectedAudit.insights.map((insight, idx) => (
+                  {selectedAnalysis.insights.map((insight, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
                       <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5" />
                       <span>{insight}</span>
@@ -428,7 +428,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                   Axes d'Amélioration
                 </h3>
                 <ul className="space-y-2">
-                  {selectedAudit.improvements.map((improvement, idx) => (
+                  {selectedAnalysis.improvements.map((improvement, idx) => (
                     <li key={idx} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
                       <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 mt-1.5" />
                       <span>{improvement}</span>
@@ -440,17 +440,17 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
             
             <div className="p-6 border-t border-slate-100 dark:border-slate-800/50 bg-slate-50 dark:bg-[#0f1115] flex justify-end gap-3">
               <button 
-                onClick={() => setSelectedAudit(null)}
+                onClick={() => setSelectedAnalysis(null)}
                 className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 text-sm font-bold rounded-xl transition-colors"
               >
                 Fermer
               </button>
               <button 
                 onClick={() => {
-                  if (selectedAudit?.title === '10 Tips for Better Code') {
-                    handleAnalyze(selectedAudit.title);
+                  if (selectedAnalysis?.title === '10 Tips for Better Code') {
+                    handleAnalyze(selectedAnalysis.title);
                   } else {
-                    setSelectedAudit(null);
+                    setSelectedAnalysis(null);
                     setActiveTab('video');
                   }
                 }}
@@ -489,7 +489,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <PieChart className="h-4 w-4 text-slate-400" />
-                  Metrics Breakdown
+                  Répartition des Métriques
                 </h3>
                 <div className="grid grid-cols-2 gap-3">
                   {statDetails[selectedStat].metrics.map((metric: any, idx: number) => (
@@ -504,7 +504,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                   <Info className="h-4 w-4 text-slate-400" />
-                  Key Insights
+                  Insights Clés
                 </h3>
                 <ul className="space-y-2">
                   {statDetails[selectedStat].insights.map((insight: string, idx: number) => (

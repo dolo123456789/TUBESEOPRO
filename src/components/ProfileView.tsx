@@ -1,24 +1,50 @@
-import React, { useState, useRef } from 'react';
-import { User, Mail, Shield, Save, Loader2, Camera, Trash2 } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { User, Mail, Shield, Save, Loader2, Camera, Trash2, Crown, Zap } from 'lucide-react';
+import { auth, db } from '../firebase';
+import { onAuthStateChanged, updateProfile, User as FirebaseUser } from 'firebase/auth';
+import { useProMode } from '../context/ProModeContext';
 
 export function ProfileView() {
-  const [displayName, setDisplayName] = useState('Demo User');
-  const [email] = useState('demo@example.com');
+  const [displayName, setDisplayName] = useState('');
+  const [email, setEmail] = useState('');
   const [photoURL, setPhotoURL] = useState('');
+  const [user, setUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { isPro, toggleProMode } = useProMode();
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        setDisplayName(currentUser.displayName || '');
+        setEmail(currentUser.email || '');
+        setPhotoURL(currentUser.photoURL || '');
+      }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) return;
+    
     setIsLoading(true);
     setMessage({ type: '', text: '' });
 
-    setTimeout(() => {
-      setMessage({ type: 'success', text: 'Profil mis à jour avec succès (Mode Démo) !' });
+    try {
+      await updateProfile(user, {
+        displayName: displayName,
+      });
+      setMessage({ type: 'success', text: 'Profil mis à jour avec succès !' });
+    } catch (error: any) {
+      console.error(error);
+      setMessage({ type: 'error', text: 'Erreur lors de la mise à jour du profil.' });
+    } finally {
       setIsLoading(false);
-    }, 800);
+    }
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -178,12 +204,29 @@ export function ProfileView() {
             <div className="pt-6 border-t border-slate-100 dark:border-slate-800 grid grid-cols-2 gap-4">
               <div>
                 <p className="text-xl font-bold text-slate-900 dark:text-white">12</p>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Audits</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Analyses</p>
               </div>
               <div>
-                <p className="text-xl font-bold text-slate-900 dark:text-white">Pro</p>
+                <p className="text-xl font-bold text-slate-900 dark:text-white">{isPro ? 'Pro' : 'Gratuit'}</p>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Plan</p>
               </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800">
+              <button
+                onClick={toggleProMode}
+                className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold transition-all ${
+                  isPro 
+                    ? "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200" 
+                    : "bg-gradient-to-r from-amber-400 to-amber-600 text-white shadow-lg shadow-amber-500/20 hover:scale-[1.02]"
+                }`}
+              >
+                {isPro ? <Zap className="h-4 w-4" /> : <Crown className="h-4 w-4" />}
+                {isPro ? "Désactiver Mode Pro (Test)" : "Activer Mode Pro (Test)"}
+              </button>
+              <p className="text-[10px] text-slate-500 mt-2 italic">
+                Note: Ce bouton est disponible pour tester les fonctionnalités Pro sans paiement.
+              </p>
             </div>
           </div>
         </div>

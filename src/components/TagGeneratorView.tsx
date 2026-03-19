@@ -20,7 +20,7 @@ export function TagGeneratorView() {
       const result = await generateTags(topic);
       setTags(result);
     } catch (err) {
-      setError('Failed to generate tags. Please try again.');
+      setError('Échec de la génération des tags. Veuillez réessayer.');
     } finally {
       setIsLoading(false);
     }
@@ -39,15 +39,15 @@ export function TagGeneratorView() {
         <div className="mx-auto h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-900/20 flex items-center justify-center mb-4">
           <Tags className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
         </div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">YouTube Tag Generator</h1>
-        <p className="mt-2 text-lg text-slate-500 dark:text-slate-400">Generate highly optimized tags to boost your video's discoverability.</p>
+        <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Générateur de Tags YouTube</h1>
+        <p className="mt-2 text-lg text-slate-500 dark:text-slate-400">Générez des tags hautement optimisés pour booster la découvrabilité de votre vidéo.</p>
       </div>
 
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-8 shadow-md">
         <form onSubmit={handleGenerate} className="space-y-4">
           <div>
             <label htmlFor="topic" className="block text-sm font-medium leading-6 text-slate-900 dark:text-slate-300">
-              Video Topic or Main Keyword
+              Sujet de la vidéo ou mot-clé principal
             </label>
             <div className="mt-2 relative rounded-md shadow-sm">
               <input
@@ -57,7 +57,7 @@ export function TagGeneratorView() {
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 className="block w-full rounded-xl border-0 py-4 px-4 text-slate-900 dark:text-white bg-white dark:bg-[#0f1115] ring-1 ring-inset ring-slate-300 dark:ring-slate-700 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-lg sm:leading-6"
-                placeholder="e.g., psychologie humaine, react tutorial"
+                placeholder="ex: psychologie humaine, tutoriel react"
               />
             </div>
           </div>
@@ -70,10 +70,10 @@ export function TagGeneratorView() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                Generating Tags...
+                Génération des tags...
               </>
             ) : (
-              'Generate Tags'
+              'Générer les tags'
             )}
           </button>
         </form>
@@ -88,7 +88,7 @@ export function TagGeneratorView() {
         {tags.length > 0 && !isLoading && (
           <div className="mt-8 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Generated Tags ({tags.length})</h3>
+              <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Tags générés ({tags.length})</h3>
               <button
                 onClick={handleCopy}
                 className="flex items-center gap-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors"
@@ -96,12 +96,12 @@ export function TagGeneratorView() {
                 {copied ? (
                   <>
                     <CheckCircle2 className="h-4 w-4" />
-                    Copied!
+                    Copié !
                   </>
                 ) : (
                   <>
                     <Copy className="h-4 w-4" />
-                    Copy All
+                    Tout copier
                   </>
                 )}
               </button>

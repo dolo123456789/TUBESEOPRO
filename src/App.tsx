@@ -3,14 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, Component, ReactNode, ErrorInfo } from 'react';
+import React, { useState, useEffect, Component, ReactNode, ErrorInfo } from 'react';
 import { Layout } from './components/Layout';
 import { LandingView } from './components/LandingView';
 import { DashboardView } from './components/DashboardView';
 import { KeywordToolView } from './components/KeywordToolView';
 import { VideoAnalyzerView } from './components/VideoAnalyzerView';
 import { TagGeneratorView } from './components/TagGeneratorView';
-import { ChannelAuditView } from './components/ChannelAuditView';
 import { TrendingVideosView } from './components/TrendingVideosView';
 import { TrafficAnalyzerView } from './components/TrafficAnalyzerView';
 import { GrowthSimulatorView } from './components/GrowthSimulatorView';
@@ -72,9 +71,21 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 }
 
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { auth } from './firebase';
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('landing');
-  console.log("App rendering, activeTab:", activeTab);
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  console.log("App rendering, activeTab:", activeTab, "user:", user?.email);
 
   return (
     <ErrorBoundary>
@@ -82,12 +93,11 @@ export default function App() {
         <ProModeProvider>
           <SearchProvider>
             <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-              {activeTab === 'landing' && <LandingView setActiveTab={setActiveTab} />}
+              {activeTab === 'landing' && <LandingView setActiveTab={setActiveTab} user={user} />}
               {activeTab === 'dashboard' && <DashboardView setActiveTab={setActiveTab} />}
               {activeTab === 'keyword' && <KeywordToolView />}
               {activeTab === 'video' && <VideoAnalyzerView />}
               {activeTab === 'tags' && <TagGeneratorView />}
-              {activeTab === 'channel' && <ChannelAuditView />}
               {activeTab === 'trending' && <TrendingVideosView />}
               {activeTab === 'traffic' && <TrafficAnalyzerView />}
               {activeTab === 'simulator' && <GrowthSimulatorView />}

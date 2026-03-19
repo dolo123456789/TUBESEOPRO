@@ -14,16 +14,6 @@ export function ProModeProvider({ children }: { children: ReactNode }) {
     return saved === 'true';
   });
 
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('success') === 'true') {
-      setIsPro(true);
-      localStorage.setItem('tube_seo_pro_status', 'true');
-      // Clean up URL
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-  }, []);
-
   const handleSetProMode = (status: boolean) => {
     setIsPro(status);
     localStorage.setItem('tube_seo_pro_status', status.toString());

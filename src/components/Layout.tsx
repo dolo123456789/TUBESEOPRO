@@ -44,15 +44,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
   const { isPro, toggleProMode } = useProMode();
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('success') === 'true') {
-      setShowSuccessToast(true);
-    }
-  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -81,20 +73,19 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
 
   const navigation = [
     { name: 'Accueil', id: 'landing', icon: BarChart2 },
-    { name: 'Dashboard', id: 'dashboard', icon: BarChart2 },
-    { name: 'Keyword Tool', id: 'keyword', icon: Search },
-    { name: 'Video Analyzer', id: 'video', icon: Video },
-    { name: 'Tag Generator', id: 'tags', icon: Tags },
-    { name: 'Channel Audit', id: 'channel', icon: Users },
-    { name: 'Trending Videos', id: 'trending', icon: TrendingUp },
-    { name: 'Traffic Analyzer', id: 'traffic', icon: BarChart3 },
-    { name: 'Growth Simulator', id: 'simulator', icon: Bot },
-    { name: 'SEO Checklist', id: 'checklist', icon: ClipboardCheck },
-    { name: 'Configuration', id: 'settings', icon: Settings },
+    { name: 'Tableau de bord', id: 'dashboard', icon: BarChart2 },
+    { name: 'Mots-clés', id: 'keyword', icon: Search },
+    { name: 'Analyseur Vidéo', id: 'video', icon: Video },
+    { name: 'Générateur de Tags', id: 'tags', icon: Tags },
+    { name: 'Vidéos Tendances', id: 'trending', icon: TrendingUp },
+    { name: 'Analyseur de Trafic', id: 'traffic', icon: BarChart3 },
+    { name: 'Simulateur de Croissance', id: 'simulator', icon: Bot },
+    { name: 'Checklist SEO', id: 'checklist', icon: ClipboardCheck },
+    { name: 'Paramètres', id: 'settings', icon: Settings },
     { name: 'Mon Profil', id: 'profile', icon: User },
     { name: 'Tarifs', id: 'pricing', icon: CreditCard },
     { name: 'FAQ', id: 'faq', icon: HelpCircle },
-    { name: 'Policy', id: 'policy', icon: Shield },
+    { name: 'Politique', id: 'policy', icon: Shield },
   ];
 
   return (
@@ -155,43 +146,8 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
 
           <div className="px-4 mt-auto">
             <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 p-4 text-white shadow-xl shadow-indigo-600/20">
-              <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Current Plan</p>
-              <p className="text-sm font-bold mb-3">{isPro ? 'Professional Plan' : 'Free Tier'}</p>
-              {!isPro && (
-                <button 
-                  onClick={async (e) => {
-                    const btn = e.currentTarget;
-                    const originalText = btn.innerText;
-                    try {
-                      btn.innerText = '...';
-                      btn.disabled = true;
-                      const response = await fetch('/api/create-checkout-session', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                      });
-                      const data = await response.json();
-                      if (data.url) {
-                        window.location.href = data.url;
-                      } else {
-                        console.error('Payment error:', data.error);
-                        alert('Erreur de paiement: ' + (data.error || 'Veuillez vérifier vos clés API Paydunya.'));
-                        btn.innerText = originalText;
-                        btn.disabled = false;
-                      }
-                    } catch (error) {
-                      console.error('Payment error:', error);
-                      alert('Erreur de connexion au serveur de paiement.');
-                      btn.innerText = originalText;
-                      btn.disabled = false;
-                    }
-                  }}
-                  className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white text-xs font-bold py-2 rounded-lg transition-colors disabled:opacity-50"
-                >
-                  Upgrade Now
-                </button>
-              )}
+              <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Plan Actuel</p>
+              <p className="text-sm font-bold mb-3">{isPro ? 'Plan Professionnel' : 'Version Gratuite'}</p>
             </div>
           </div>
         </div>
@@ -199,13 +155,6 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden relative">
-        {showSuccessToast && (
-          <Toast 
-            message="Félicitations ! Votre abonnement Pro est maintenant actif." 
-            type="success" 
-            onClose={() => setShowSuccessToast(false)} 
-          />
-        )}
         <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-900 pointer-events-none opacity-50" />
         
         <header className="flex h-16 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#0f1115]/80 backdrop-blur-md px-4 lg:px-8 z-10">
@@ -229,7 +178,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
                         {user.displayName || 'Utilisateur'}
                       </p>
                       <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {isPro ? 'Pro Member' : 'Free Member'}
+                        {isPro ? 'Membre Pro' : 'Membre Gratuit'}
                       </p>
                     </div>
                     {user.photoURL ? (

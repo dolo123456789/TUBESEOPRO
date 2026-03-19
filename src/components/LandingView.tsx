@@ -1,7 +1,25 @@
 import React from 'react';
-import { Zap, Crown, Shield, Sparkles, ArrowRight } from 'lucide-react';
+import { Zap, Crown, Shield, Sparkles, ArrowRight, Bot } from 'lucide-react';
 
-export function LandingView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
+import { auth } from '../firebase';
+import { signInWithPopup, GoogleAuthProvider, User as FirebaseUser } from 'firebase/auth';
+
+export function LandingView({ setActiveTab, user }: { setActiveTab: (tab: string) => void, user: FirebaseUser | null }) {
+  const handleGetStarted = async () => {
+    if (user) {
+      setActiveTab('dashboard');
+    } else {
+      const provider = new GoogleAuthProvider();
+      try {
+        await signInWithPopup(auth, provider);
+        setActiveTab('dashboard');
+      } catch (error) {
+        console.error("Login error:", error);
+        setActiveTab('pricing');
+      }
+    }
+  };
+
   return (
     <div className="space-y-32 py-16">
       {/* Hero Section */}
@@ -18,7 +36,7 @@ export function LandingView({ setActiveTab }: { setActiveTab: (tab: string) => v
         </p>
         <div className="flex items-center justify-center gap-4 pt-4">
           <button 
-            onClick={() => setActiveTab('pricing')}
+            onClick={handleGetStarted}
             className="px-10 py-5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl transition-all shadow-xl shadow-indigo-600/20 flex items-center gap-3 text-lg"
           >
             Commencer l'analyse <ArrowRight className="h-5 w-5" />
@@ -31,7 +49,7 @@ export function LandingView({ setActiveTab }: { setActiveTab: (tab: string) => v
         {[
           { icon: Zap, title: 'SEO Intelligent', desc: 'Générez des titres et descriptions optimisés pour l\'algorithme en un clic.' },
           { icon: Crown, title: 'Analyses Pro', desc: 'Accédez à des données de marché exclusives pour devancer vos concurrents.' },
-          { icon: Shield, title: 'Audit Stratégique', desc: 'Identifiez vos faiblesses et transformez-les en opportunités de croissance.' }
+          { icon: Bot, title: 'Simulateur de Croissance', desc: 'Prévoyez l\'évolution de votre chaîne avec nos modèles de simulation IA.' }
         ].map((feature, i) => (
           <div key={i} className="p-10 bg-white dark:bg-[#1a1b20] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg shadow-slate-200/50 dark:shadow-none transition-transform hover:-translate-y-1 duration-300">
             <div className="h-16 w-16 rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center mb-8 border border-indigo-100 dark:border-indigo-800/50">

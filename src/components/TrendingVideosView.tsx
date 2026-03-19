@@ -9,12 +9,17 @@ export function TrendingVideosView() {
   const { lastKeyword } = useSearchContext();
   const [trendingVideos, setTrendingVideos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeRegion, setActiveRegion] = useState('Global');
+
+  const categories = ['All', 'Gaming', 'Music', 'Education', 'Entertainment', 'Tech', 'News'];
+  const regions = ['Global', 'USA', 'France', 'Senegal', 'India', 'UK', 'Brazil'];
 
   useEffect(() => {
     const loadTrending = async () => {
       setIsLoading(true);
       try {
-        const data = await fetchTrendingVideos(lastKeyword || 'YouTube');
+        const data = await fetchTrendingVideos(lastKeyword || 'YouTube', activeCategory, activeRegion);
         setTrendingVideos(data);
       } catch (error) {
         console.error('Failed to fetch trending videos:', error);
@@ -23,7 +28,7 @@ export function TrendingVideosView() {
       }
     };
     loadTrending();
-  }, [lastKeyword]);
+  }, [lastKeyword, activeCategory, activeRegion]);
 
   return (
     <div className="space-y-6">
@@ -31,9 +36,33 @@ export function TrendingVideosView() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <Flame className="h-6 w-6 text-orange-500" />
-            Trending Videos for "{lastKeyword || 'YouTube'}"
+            Vidéos Tendances pour "{lastKeyword || 'YouTube'}"
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Discover what's going viral right now across YouTube.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Découvrez ce qui devient viral en ce moment sur YouTube.</p>
+        </div>
+        
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2 bg-white dark:bg-[#1a1b20] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Catégorie :</span>
+            <select 
+              value={activeCategory}
+              onChange={(e) => setActiveCategory(e.target.value)}
+              className="bg-transparent border-0 text-sm font-bold text-slate-900 dark:text-white focus:ring-0 cursor-pointer outline-none"
+            >
+              {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            </select>
+          </div>
+          
+          <div className="flex items-center gap-2 bg-white dark:bg-[#1a1b20] border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-1.5">
+            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Région :</span>
+            <select 
+              value={activeRegion}
+              onChange={(e) => setActiveRegion(e.target.value)}
+              className="bg-transparent border-0 text-sm font-bold text-slate-900 dark:text-white focus:ring-0 cursor-pointer outline-none"
+            >
+              {regions.map(reg => <option key={reg} value={reg}>{reg}</option>)}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -62,6 +91,11 @@ export function TrendingVideosView() {
                     <TrendingUp className="h-3 w-3 text-emerald-400" />
                     {video.growth}
                   </div>
+                  {video.viral_score && (
+                    <div className="absolute bottom-3 left-3 bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-lg">
+                      VIRAL : {video.viral_score}%
+                    </div>
+                  )}
                 </div>
                 <div className="p-5">
                   <h3 className="font-semibold text-slate-900 dark:text-white line-clamp-2 mb-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
@@ -72,11 +106,16 @@ export function TrendingVideosView() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-1.5 text-sm font-medium text-slate-700 dark:text-slate-300">
                       <Eye className="h-4 w-4 text-slate-400 dark:text-slate-500" />
-                      {video.views} views
+                      {video.views} vues
                     </div>
-                    <button className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
-                      Analyze
-                    </button>
+                    <a 
+                      href={video.video_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
+                    >
+                      Regarder
+                    </a>
                   </div>
 
                   <div className="flex flex-wrap gap-1.5">

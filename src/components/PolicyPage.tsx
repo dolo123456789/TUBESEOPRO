@@ -7,19 +7,19 @@ export function PolicyPage() {
       <div className="text-center">
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-center gap-2">
           <Shield className="h-8 w-8 text-indigo-600" />
-          Privacy Policy
+          Politique de Confidentialité
         </h1>
-        <p className="text-slate-500 dark:text-slate-400">Your privacy is our priority.</p>
+        <p className="text-slate-500 dark:text-slate-400">Votre vie privée est notre priorité.</p>
       </div>
       <div className="bg-white dark:bg-[#1a1b20] p-8 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Data Collection</h2>
-        <p className="text-slate-600 dark:text-slate-300">We collect minimal data required to provide our SEO analysis services. We do not share your personal information with third parties.</p>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Collecte de Données</h2>
+        <p className="text-slate-600 dark:text-slate-300">Nous collectons le minimum de données nécessaires pour fournir nos services d'analyse SEO. Nous ne partageons pas vos informations personnelles avec des tiers.</p>
         
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Use of Data</h2>
-        <p className="text-slate-600 dark:text-slate-300">Data is used solely for the purpose of analyzing your video metadata and providing SEO recommendations.</p>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Utilisation des Données</h2>
+        <p className="text-slate-600 dark:text-slate-300">Les données sont utilisées exclusivement dans le but d'analyser les métadonnées de vos vidéos et de fournir des recommandations SEO.</p>
         
-        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Security</h2>
-        <p className="text-slate-600 dark:text-slate-300">We implement industry-standard security measures to protect your data from unauthorized access.</p>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">Sécurité</h2>
+        <p className="text-slate-600 dark:text-slate-300">Nous mettons en œuvre des mesures de sécurité conformes aux standards de l'industrie pour protéger vos données contre tout accès non autorisé.</p>
       </div>
     </div>
   );

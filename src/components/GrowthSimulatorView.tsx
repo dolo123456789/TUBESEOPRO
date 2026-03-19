@@ -36,7 +36,7 @@ export function GrowthSimulatorView() {
       <div className="bg-white dark:bg-[#1a1b20] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Bot className="h-6 w-6 text-indigo-500" />
-          YouTube Traffic & Growth Simulator (AI Bot)
+          Simulateur de Croissance et Trafic YouTube (IA)
         </h1>
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
           Simulez la croissance de votre chaîne en utilisant nos algorithmes prédictifs basés sur l'IA.
@@ -128,7 +128,7 @@ export function GrowthSimulatorView() {
             <div className="bg-indigo-600 rounded-2xl p-6 text-white flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-bold mb-1">Résultat de la Simulation</h3>
-                <p className="text-indigo-100 text-sm">En suivant la stratégie "Magique", vous pourriez atteindre <span className="font-bold text-white">{simulationData[12]?.subscribers?.toLocaleString() || 'N/A'}</span> abonnés en un an.</p>
+                <p className="text-indigo-100 text-sm">En suivant la stratégie "Optimisée", vous pourriez atteindre <span className="font-bold text-white">{simulationData[12]?.subscribers?.toLocaleString() || 'N/A'}</span> abonnés en un an.</p>
               </div>
               <div className="text-right">
                 <p className="text-xs text-indigo-200 uppercase font-bold tracking-wider">Croissance Totale</p>

@@ -32,7 +32,6 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
         'Recherche de mots-clés illimitée',
         'Données CPC & Tendances Pro',
         'Analyse de trafic approfondie',
-        'Audit de chaîne concurrentielle',
         'Simulateur de croissance IA',
         'Stratégies "Magiques" personnalisées',
         'Analyse SEO A/B (Titres)',
@@ -138,36 +137,8 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
               </ul>
 
               <button
-                onClick={async (e) => {
-                  const btn = e.currentTarget;
-                  const originalText = btn.innerText;
-                  if (plan.name === 'Pro') {
-                    try {
-                      btn.innerText = 'Chargement...';
-                      btn.disabled = true;
-                      const response = await fetch('/api/create-checkout-session', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'x-user-email': auth.currentUser?.email || '',
-                        },
-                      });
-                      const data = await response.json();
-                      if (data.url) {
-                        window.location.href = data.url;
-                      } else {
-                        console.error('Payment error:', data.error);
-                        alert('Erreur de paiement: ' + (data.error || 'Veuillez vérifier vos clés API Paydunya dans les paramètres.'));
-                        btn.innerText = originalText;
-                        btn.disabled = false;
-                      }
-                    } catch (error) {
-                      console.error('Paydunya error:', error);
-                      alert('Erreur de connexion au serveur de paiement.');
-                      btn.innerText = originalText;
-                      btn.disabled = false;
-                    }
-                  } else if (plan.name !== 'Gratuit') {
+                onClick={async () => {
+                  if (plan.name !== 'Gratuit') {
                     window.location.href = "mailto:adjisanoudolo1@gmail.com?subject=Demande d'accès TubeSEO Pro";
                   }
                 }}
@@ -205,7 +176,7 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
             </div>
             <div className="space-y-2">
               <h4 className="font-bold text-slate-900 dark:text-white">Gain de temps massif</h4>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Automatisez votre recherche de mots-clés et votre audit de concurrence en quelques secondes.</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Automatisez votre recherche de mots-clés et votre optimisation SEO en quelques secondes.</p>
             </div>
           </div>
         </div>

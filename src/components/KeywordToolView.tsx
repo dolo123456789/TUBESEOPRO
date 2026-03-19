@@ -32,7 +32,7 @@ export function KeywordToolView() {
       if (isBulkMode) {
         const keywordsList = keyword.split('\n').map(k => k.trim()).filter(k => k.length > 0);
         if (keywordsList.length > 20) {
-          throw new Error("Please enter a maximum of 20 keywords for bulk search.");
+          throw new Error("Veuillez entrer un maximum de 20 mots-clés pour la recherche en masse.");
         }
         const result = await generateBulkKeywordData(keywordsList, isPro);
         setBulkData(result);
@@ -47,7 +47,7 @@ export function KeywordToolView() {
       setActiveTab('overview');
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Failed to analyze keyword. Please try again.');
+      setError(err.message || "Échec de l'analyse du mot-clé. Veuillez réessayer.");
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +106,7 @@ export function KeywordToolView() {
             <p className="text-slate-500 dark:text-slate-400 mb-2">{emptyMessage}</p>
             <p className="text-slate-900 dark:text-white font-bold mb-4">{keyword}</p>
             <p className="text-slate-500 text-sm mb-6">Essayez de rechercher un terme plus large</p>
-            <a href="#" className="text-blue-600 dark:text-blue-500 text-sm hover:underline">Curious about how {title.toLowerCase()} work? Let us explain</a>
+            <a href="#" className="text-blue-600 dark:text-blue-500 text-sm hover:underline">Curieux de savoir comment fonctionnent les {title.toLowerCase()} ? Laissez-nous vous expliquer</a>
           </div>
         )}
 
@@ -143,7 +143,7 @@ export function KeywordToolView() {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               className="w-full bg-transparent border-0 py-4 pl-4 pr-12 text-slate-900 dark:text-white placeholder:text-slate-500 focus:ring-0 outline-none min-h-[120px] resize-y"
-              placeholder="Enter up to 20 keywords (one per line)..."
+              placeholder="Entrez jusqu'à 20 mots-clés (un par ligne)..."
             />
           ) : (
             <input
@@ -151,7 +151,7 @@ export function KeywordToolView() {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               className="w-full bg-transparent border-0 py-4 pl-4 pr-12 text-slate-900 dark:text-white placeholder:text-slate-500 focus:ring-0 outline-none"
-              placeholder="Search keywords..."
+              placeholder="Rechercher des mots-clés..."
             />
           )}
           {keyword && (
@@ -163,7 +163,7 @@ export function KeywordToolView() {
         <div className="mt-4 flex justify-end">
           <button type="submit" disabled={isLoading || !keyword.trim()} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2">
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-            {isBulkMode ? 'Analyze Keywords' : 'Analyze Keyword'}
+            {isBulkMode ? 'Analyser les mots-clés' : 'Analyser le mot-clé'}
           </button>
         </div>
       </form>
@@ -195,6 +195,12 @@ export function KeywordToolView() {
           >
             Des questions
           </button>
+          <button 
+            onClick={() => setActiveTab('top_videos')}
+            className={`whitespace-nowrap pb-4 -mb-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'top_videos' ? 'border-blue-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          >
+            Top Vidéos
+          </button>
         </div>
         
         <div className="flex items-center gap-2">
@@ -202,7 +208,7 @@ export function KeywordToolView() {
             onClick={() => setIsBulkMode(false)}
             className={`${!isBulkMode ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-slate-100 dark:bg-[#1a1b20] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'} px-4 py-1.5 rounded-full text-sm font-medium transition-colors`}
           >
-            Single search
+            Recherche simple
           </button>
           <button 
             onClick={() => {
@@ -215,7 +221,7 @@ export function KeywordToolView() {
             }}
             className={`flex items-center gap-2 ${isBulkMode ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-slate-100 dark:bg-[#1a1b20] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'} px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${!isPro ? 'opacity-80' : ''}`}
           >
-            {!isPro ? <Lock className="h-4 w-4 text-amber-500" /> : <List className="h-4 w-4" />} Bulk search
+            {!isPro ? <Lock className="h-4 w-4 text-amber-500" /> : <List className="h-4 w-4" />} Recherche en masse
           </button>
         </div>
       </div>
@@ -233,7 +239,7 @@ export function KeywordToolView() {
         <div className="bg-white dark:bg-[#1a1b20] rounded-xl border border-slate-200 dark:border-slate-800 p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-slate-900 dark:text-white font-bold flex items-center gap-2">
-              Bulk Keyword Analysis <Info className="h-4 w-4 text-slate-500" />
+              Analyse de mots-clés en masse <Info className="h-4 w-4 text-slate-500" />
             </h3>
           </div>
           <div className="overflow-x-auto">
@@ -303,7 +309,7 @@ export function KeywordToolView() {
               
               <div className="w-full flex justify-start mb-8">
                 <button className="flex items-center gap-2 bg-slate-100 dark:bg-[#2a2b30] hover:bg-slate-200 dark:hover:bg-[#3a3b40] text-slate-900 dark:text-white px-4 py-2 rounded-full text-sm font-medium transition-colors border border-slate-200 dark:border-slate-700">
-                  <Search className="h-4 w-4" /> Get video ideas
+                  <Search className="h-4 w-4" /> Obtenir des idées de vidéos
                 </button>
               </div>
 
@@ -327,7 +333,7 @@ export function KeywordToolView() {
                 </div>
               </div>
               
-              <p className="text-slate-500 dark:text-slate-400 text-sm mb-1">Overall score</p>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-1">Score global</p>
               <p className={`font-bold uppercase tracking-wider text-sm mb-8 ${getScoreColor(data.overall_score || 0)}`}>
                 {data.score_label}
               </p>
@@ -362,12 +368,12 @@ export function KeywordToolView() {
                       <Crown className="h-6 w-6 text-amber-500" />
                     </div>
                     <div className="text-left">
-                      <p className="text-slate-900 dark:text-white font-bold">Pro Data: Estimated CPC & Trends</p>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">Unlock advanced monetization and trend data</p>
+                      <p className="text-slate-900 dark:text-white font-bold">Données Pro : CPC estimé et tendances</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Débloquez la monétisation avancée et les données de tendance</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-amber-600 dark:text-amber-500 font-bold text-sm">
-                    <Lock className="h-4 w-4" /> Unlock Pro
+                    <Lock className="h-4 w-4" /> Débloquer Pro
                   </div>
                 </button>
               ) : data.cpc !== undefined ? (
@@ -375,12 +381,12 @@ export function KeywordToolView() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-amber-700 dark:text-amber-500 font-bold mb-1 flex items-center gap-2">
-                        <Crown className="h-4 w-4" /> Pro Data: Estimated CPC
+                        <Crown className="h-4 w-4" /> Données Pro : CPC estimé
                       </p>
                       <p className="text-2xl font-bold text-slate-900 dark:text-white">${Number(data.cpc || 0).toFixed(2)}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-amber-700 dark:text-amber-500 font-bold mb-1">Search Trend</p>
+                      <p className="text-amber-700 dark:text-amber-500 font-bold mb-1">Tendance de recherche</p>
                       <p className={`text-xl font-bold capitalize ${data.trend === 'Up' ? 'text-emerald-500' : data.trend === 'Down' ? 'text-red-500' : 'text-slate-900 dark:text-white'}`}>
                         {data.trend}
                       </p>
@@ -388,8 +394,27 @@ export function KeywordToolView() {
                   </div>
                   {data.pro_insight && (
                     <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-                      <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">Pro Strategic Insight</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">Aperçu stratégique Pro</p>
                       <p className="text-sm text-slate-900 dark:text-white italic">"{data.pro_insight}"</p>
+                    </div>
+                  )}
+                  {data.difficulty_score !== undefined && (
+                    <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Difficulté de classement</p>
+                        <span className={`text-sm font-bold ${data.difficulty_score > 70 ? 'text-red-500' : data.difficulty_score > 40 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                          {data.difficulty_score}/100
+                        </span>
+                      </div>
+                      <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden mb-2">
+                        <div 
+                          className={`h-full transition-all duration-1000 ${data.difficulty_score > 70 ? 'bg-red-500' : data.difficulty_score > 40 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                          style={{ width: `${data.difficulty_score}%` }}
+                        />
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        {data.difficulty_reason}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -417,7 +442,7 @@ export function KeywordToolView() {
                     Mots-clés contenant le mot-clé ou l'expression recherché(e) dans n'importe quel ordre
                   </div>
                 )}
-                {renderKeywordList(data.matching_terms, "Matching keywords", "", "Nous ne trouvons aucun terme correspondant à")}
+                {renderKeywordList(data.matching_terms, "Termes correspondants", "", "Nous ne trouvons aucun terme correspondant à")}
               </div>
             )}
             
@@ -429,6 +454,36 @@ export function KeywordToolView() {
                   </div>
                 )}
                 {renderKeywordList(data.questions, "Des questions", "", "Nous ne trouvons aucune question pour")}
+              </div>
+            )}
+
+            {(activeTab === 'overview' || activeTab === 'top_videos') && (
+              <div className="bg-white dark:bg-[#1a1b20] rounded-xl border border-slate-200 dark:border-slate-800 p-6">
+                <h3 className="text-slate-900 dark:text-white font-bold flex items-center gap-2 mb-6">
+                  Top Vidéos Classées <Info className="h-4 w-4 text-slate-500" />
+                </h3>
+                <div className="space-y-4">
+                  {data.top_ranking_videos?.map((video: any, i: number) => (
+                    <div key={i} className="flex items-start gap-4 p-3 rounded-lg hover:bg-slate-50 dark:hover:bg-[#2a2b30]/30 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-800">
+                      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center shrink-0">
+                        <span className="text-blue-500 font-bold">{i + 1}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white truncate mb-1">{video.title}</h4>
+                        <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+                          <span className="font-medium text-blue-500">{video.channel}</span>
+                          <span>•</span>
+                          <span>{video.views} vues</span>
+                          <span>•</span>
+                          <span>{video.published}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {(!data.top_ranking_videos || data.top_ranking_videos.length === 0) && (
+                    <p className="text-center text-slate-500 py-4">Aucune vidéo trouvée pour ce mot-clé.</p>
+                  )}
+                </div>
               </div>
             )}
           </div>
