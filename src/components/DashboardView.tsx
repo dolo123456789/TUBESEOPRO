@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { TrendingUp, Users, Search, Video, Eye, MousePointerClick, Tag, X, CheckCircle2, AlertCircle, PieChart, Activity, Info, Loader2, History, Gavel, ArrowRight } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart as RePieChart, Pie } from 'recharts';
+import { TrendingUp, Users, Search, Video, Eye, MousePointerClick, Tag, X, CheckCircle2, AlertCircle, PieChart, Activity, Info, Loader2, History, Gavel, ArrowRight, Download, Zap, ShieldCheck } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI } from "@google/genai";
 import { cn } from './Layout';
 import { ai, fetchPoliticalPredictions } from '../services/geminiService';
@@ -213,51 +214,107 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
 
   const currentData = timeRange === '7' ? data7Days : data30Days;
 
+  const exportToCSV = () => {
+    const headers = ['Période', 'Vues', 'Abonnés'];
+    const rows = currentData.map(d => [d.name, d.views, d.subs]);
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `youtube_stats_${timeRange}d.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1
+    }
+  };
+
+  const seoGaugeData = [
+    { name: 'Score', value: 84 },
+    { name: 'Restant', value: 16 },
+  ];
+  const COLORS = ['#6366f1', '#e2e8f0'];
+
   return (
-    <div className="space-y-8">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
+      className="space-y-8"
+    >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Aperçu des Performances</h1>
+        <motion.div variants={itemVariants}>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-3">
+            Tableau de Bord
+            {isPro && <span className="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full font-black uppercase tracking-widest">Pro</span>}
+          </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Analytique en temps réel pour votre chaîne YouTube.</p>
-        </div>
-        <div className="flex items-center gap-2 bg-white dark:bg-[#1a1b20] p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        </motion.div>
+        <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-3">
           <button 
-            onClick={() => setTimeRange('7')}
-            className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
-              timeRange === '7' 
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" 
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-            }`}
+            onClick={exportToCSV}
+            className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 bg-white dark:bg-[#1a1b20] border border-slate-200 dark:border-slate-800 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shadow-sm"
           >
-            7 derniers jours
+            <Download className="h-4 w-4" />
+            Exporter CSV
           </button>
-          <button 
-            onClick={() => setTimeRange('30')}
-            className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
-              timeRange === '30' 
-                ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" 
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-            }`}
-          >
-            30 derniers jours
-          </button>
-        </div>
+          <div className="flex items-center gap-2 bg-white dark:bg-[#1a1b20] p-1 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm">
+            <button 
+              onClick={() => setTimeRange('7')}
+              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                timeRange === '7' 
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" 
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              7 Jours
+            </button>
+            <button 
+              onClick={() => setTimeRange('30')}
+              className={`px-4 py-1.5 text-xs font-bold rounded-lg transition-all ${
+                timeRange === '30' 
+                  ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" 
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              30 Jours
+            </button>
+          </div>
+        </motion.div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { title: 'Vues Totales', value: timeRange === '7' ? '2.4M' : '10.2M', icon: Video, trend: '+12.5%', color: 'indigo', span: 'lg:col-span-1' },
-          { title: 'Abonnés', value: timeRange === '7' ? '142K' : '158K', icon: Users, trend: '+4.2%', color: 'emerald', span: 'lg:col-span-1' },
-          { title: 'Score SEO Moyen', value: '84/100', icon: Search, trend: '+2.1%', color: 'amber', span: 'lg:col-span-1' },
-          { title: 'Potentiel Viral', value: 'Élevé', icon: TrendingUp, trend: 'Stable', color: 'violet', span: 'lg:col-span-1' },
+          { title: 'Vues Totales', value: timeRange === '7' ? '2.4M' : '10.2M', icon: Video, trend: '+12.5%', color: 'indigo' },
+          { title: 'Abonnés', value: timeRange === '7' ? '142K' : '158K', icon: Users, trend: '+4.2%', color: 'emerald' },
+          { title: 'Score SEO Moyen', value: '84/100', icon: Search, trend: '+2.1%', color: 'amber' },
+          { title: 'Potentiel Viral', value: 'Élevé', icon: TrendingUp, trend: 'Stable', color: 'violet' },
         ].map((stat) => (
-          <div 
+          <motion.div 
+            variants={itemVariants}
             key={stat.title} 
             onClick={() => setSelectedStat(stat.title)}
-            className={cn(
-              "group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm transition-all hover:shadow-xl hover:-translate-y-1 cursor-pointer",
-              stat.span
-            )}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm transition-all hover:shadow-xl cursor-pointer"
           >
             <div className={cn("absolute top-0 right-0 -mr-4 -mt-4 h-24 w-24 rounded-full blur-2xl transition-colors", 
               stat.color === 'indigo' ? 'bg-indigo-500/5 group-hover:bg-indigo-500/10' :
@@ -286,15 +343,18 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{stat.title}</p>
               <h3 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">{stat.value}</h3>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-8">
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm">
+          <motion.div variants={itemVariants} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm">
             <div className="flex items-center justify-between mb-8">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Trafic {timeRange === '7' ? 'Hebdomadaire' : 'Mensuel'}</h3>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white">Trafic {timeRange === '7' ? 'Hebdomadaire' : 'Mensuel'}</h3>
+                <p className="text-xs text-slate-500">Visualisation des tendances de croissance</p>
+              </div>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <div className="h-3 w-3 rounded-full bg-indigo-500" />
@@ -351,11 +411,11 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                 </BarChart>
               </ResponsiveContainer>
             </div>
-          </div>
+          </motion.div>
 
           {/* Keyword History & Strategic Summary */}
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm">
+            <motion.div variants={itemVariants} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <History className="h-4 w-4 text-slate-400" />
@@ -379,45 +439,96 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                   <p className="text-xs text-slate-500 py-4 text-center italic">Aucun historique récent</p>
                 )}
               </div>
-            </div>
+            </motion.div>
 
             {isPro && (
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-indigo-600 to-violet-700 p-6 shadow-lg shadow-indigo-600/20 text-white">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-bold flex items-center gap-2">
-                    <Gavel className="h-4 w-4 text-indigo-200" />
-                    Flash Stratégique
-                  </h3>
-                  <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded">Sénégal</span>
+              <motion.div variants={itemVariants} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-indigo-600 to-violet-700 p-6 shadow-lg shadow-indigo-600/20 text-white relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-2 opacity-10">
+                  <Zap className="h-24 w-24" />
                 </div>
-                {latestPrediction ? (
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-black leading-tight">{latestPrediction.title}</h4>
-                    <p className="text-[11px] text-indigo-100 line-clamp-3 leading-relaxed opacity-90">
-                      {latestPrediction.description}
-                    </p>
-                    <button 
-                      onClick={() => handleStatClick('predictions')}
-                      className="w-full mt-2 py-2 bg-white text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-colors"
-                    >
-                      Voir l'analyse complète
-                    </button>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold flex items-center gap-2">
+                      <Gavel className="h-4 w-4 text-indigo-200" />
+                      Flash Stratégique
+                    </h3>
+                    <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded">Sénégal</span>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-4 text-center">
-                    <Loader2 className="h-6 w-6 animate-spin mb-2 opacity-50" />
-                    <p className="text-xs text-indigo-100">Chargement de l'analyse...</p>
-                  </div>
-                )}
-              </div>
+                  {latestPrediction ? (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-black leading-tight">{latestPrediction.title}</h4>
+                      <p className="text-[11px] text-indigo-100 line-clamp-3 leading-relaxed opacity-90">
+                        {latestPrediction.description}
+                      </p>
+                      <button 
+                        onClick={() => handleStatClick('predictions')}
+                        className="w-full mt-2 py-2 bg-white text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-colors"
+                      >
+                        Voir l'analyse complète
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-4 text-center">
+                      <Loader2 className="h-6 w-6 animate-spin mb-2 opacity-50" />
+                      <p className="text-xs text-indigo-100">Chargement de l'analyse...</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
             )}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm flex flex-col">
+        <motion.div variants={itemVariants} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Analyses Récentes</h3>
-            <button className="text-xs font-bold text-indigo-600 hover:text-indigo-500 transition-colors">Voir Tout</button>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Santé SEO</h3>
+            <div className="flex items-center gap-1 text-emerald-500">
+              <ShieldCheck className="h-4 w-4" />
+              <span className="text-xs font-bold">Optimisé</span>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center justify-center py-4 mb-6 border-b border-slate-100 dark:border-slate-800/50">
+            <div className="relative h-40 w-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <RePieChart>
+                  <Pie
+                    data={seoGaugeData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={75}
+                    startAngle={180}
+                    endAngle={0}
+                    paddingAngle={0}
+                    dataKey="value"
+                  >
+                    {seoGaugeData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} stroke="none" />
+                    ))}
+                  </Pie>
+                </RePieChart>
+              </ResponsiveContainer>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pt-8">
+                <span className="text-3xl font-black text-slate-900 dark:text-white">84%</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Score Global</span>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 w-full mt-4">
+              <div className="text-center">
+                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Titres</p>
+                <p className="text-sm font-black text-emerald-500">92%</p>
+              </div>
+              <div className="text-center">
+                <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Tags</p>
+                <p className="text-sm font-black text-indigo-500">78%</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Analyses Récentes</h3>
+            <button className="text-[10px] font-bold text-indigo-600 hover:text-indigo-500 transition-colors uppercase tracking-wider">Voir Tout</button>
           </div>
           <div className="space-y-4 flex-1 overflow-y-auto pr-2 custom-scrollbar">
             {recentAnalyses.map((video, i) => (
@@ -476,7 +587,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
               Votre vidéo "React 2024" performe 40% mieux que la moyenne. Envisagez de faire une vidéo de suivi sur Next.js pour capitaliser sur le CTR élevé.
             </p>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Analysis Details Modal */}
@@ -659,6 +770,6 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

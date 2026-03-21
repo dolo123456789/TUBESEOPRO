@@ -14,6 +14,7 @@ import { PoliticalPredictionsView } from './components/PoliticalPredictionsView'
 import { TrafficAnalyzerView } from './components/TrafficAnalyzerView';
 import { GrowthSimulatorView } from './components/GrowthSimulatorView';
 import { SEOChecklistView } from './components/SEOChecklistView';
+import { ChannelSEOView } from './components/ChannelSEOView';
 import { ProfileView } from './components/ProfileView';
 import { PricingView } from './components/PricingView';
 import { FAQPage } from './components/FAQPage';
@@ -97,6 +98,7 @@ export default function App() {
               {activeTab === 'dashboard' && <DashboardView setActiveTab={setActiveTab} />}
               {activeTab === 'keyword' && <KeywordToolView setActiveTab={setActiveTab} />}
               {activeTab === 'video' && <VideoAnalyzerView setActiveTab={setActiveTab} />}
+              {activeTab === 'channel-seo' && <ChannelSEOView />}
               {activeTab === 'tags' && <TagGeneratorView setActiveTab={setActiveTab} />}
               {activeTab === 'predictions' && <PoliticalPredictionsView setActiveTab={setActiveTab} />}
               {activeTab === 'traffic' && <TrafficAnalyzerView setActiveTab={setActiveTab} />}

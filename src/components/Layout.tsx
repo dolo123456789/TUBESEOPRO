@@ -4,6 +4,7 @@ import {
   BarChart3,
   Search, 
   Video, 
+  Youtube,
   Tags, 
   TrendingUp, 
   Users,
@@ -75,6 +76,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
   const navigation = [
     { name: 'Accueil', id: 'landing', icon: BarChart2 },
     { name: 'Tableau de bord', id: 'dashboard', icon: BarChart2 },
+    { name: 'SEO Chaîne', id: 'channel-seo', icon: Youtube },
     { name: 'Mots-clés', id: 'keyword', icon: Search },
     { name: 'Analyseur Vidéo', id: 'video', icon: Video, pro: true },
     { name: 'Générateur de Tags', id: 'tags', icon: Tags },
