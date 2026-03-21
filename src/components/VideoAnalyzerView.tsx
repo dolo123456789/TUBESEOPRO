@@ -3,8 +3,9 @@ import { Video, Loader2, CheckCircle2, AlertCircle, TrendingUp, Copy, Sparkles, 
 import { analyzeVideoSEO, generateThumbnail } from '../services/geminiService';
 import { useProMode } from '../context/ProModeContext';
 import { Toast } from './Toast';
+import { ProGatedView } from './ProGatedView';
 
-export function VideoAnalyzerView() {
+export function VideoAnalyzerView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tags, setTags] = useState('');
@@ -98,8 +99,13 @@ export function VideoAnalyzerView() {
   };
 
   return (
-    <div className="space-y-6">
-      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+    <ProGatedView 
+      title="Analyseur SEO Vidéo" 
+      description="Optimisez vos métadonnées, générez des miniatures par IA et accédez à des analyses de niche profondes."
+      setActiveTab={setActiveTab}
+    >
+      <div className="space-y-6">
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Analyseur SEO Vidéo</h1>
         <p className="text-sm text-slate-500 dark:text-slate-400">Analysez les métadonnées de votre vidéo pour maximiser la portée et l'engagement.</p>
@@ -538,6 +544,7 @@ export function VideoAnalyzerView() {
         )}
       </div>
     </div>
+    </ProGatedView>
   );
 }
 

@@ -17,9 +17,15 @@ import {
   Gavel,
   ArrowUpRight,
   ArrowDownRight,
-  Minus
+  Minus,
+  ImageIcon,
+  Loader2,
+  Download,
+  Eye
 } from 'lucide-react';
-import { fetchPoliticalPredictions } from '../services/geminiService';
+import { fetchPoliticalPredictions, generateThumbnail } from '../services/geminiService';
+import { ProGatedView } from './ProGatedView';
+import { cn } from './Layout';
 
 interface Prediction {
   category: string;
@@ -38,11 +44,34 @@ const PredictionCard = React.memo(({ prediction }: { prediction: Prediction }) =
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
+  const [thumbnailUrls, setThumbnailUrls] = useState<{ horizontal: string; vertical: string } | null>(null);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleGenerateThumbnail = async () => {
+    setIsGeneratingThumbnail(true);
+    try {
+      const urls = await generateThumbnail(prediction.thumbnail_idea, undefined, 'double_16_9');
+      setThumbnailUrls(urls);
+    } catch (err) {
+      console.error('Error generating thumbnail:', err);
+    } finally {
+      setIsGeneratingThumbnail(false);
+    }
+  };
+
+  const downloadImage = (url: string, filename: string) => {
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const handleCopyAll = () => {
@@ -186,13 +215,91 @@ const PredictionCard = React.memo(({ prediction }: { prediction: Prediction }) =
           {isExpanded && (
             <div className="animate-in slide-in-from-top-2 duration-300 space-y-4 pt-2">
               <div>
-                <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-2 flex items-center gap-1.5">
-                  <BarChart3 className="h-3 w-3" /> Direction Artistique
-                </p>
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest flex items-center gap-1.5">
+                    <BarChart3 className="h-3 w-3" /> Direction Artistique
+                  </p>
+                  <button
+                    onClick={handleGenerateThumbnail}
+                    disabled={isGeneratingThumbnail}
+                    className="flex items-center gap-1.5 px-3 py-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-500/20"
+                  >
+                    {isGeneratingThumbnail ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <ImageIcon className="h-3 w-3" />
+                    )}
+                    Générer la miniature
+                  </button>
+                </div>
                 <p className="text-xs text-slate-600 dark:text-slate-400 italic bg-amber-50/30 dark:bg-amber-900/5 p-3 rounded-xl border border-amber-100/50 dark:border-amber-900/20">
                   {prediction.thumbnail_idea}
                 </p>
               </div>
+
+              {thumbnailUrls && (
+                <div className="space-y-3 animate-in fade-in duration-500">
+                  <p className="text-[10px] text-indigo-600 dark:text-indigo-400 uppercase font-black tracking-widest flex items-center gap-1.5">
+                    <ImageIcon className="h-3 w-3" /> Miniatures Générées
+                  </p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="relative group/img rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video bg-slate-100 dark:bg-slate-800">
+                      <img 
+                        src={thumbnailUrls.horizontal} 
+                        alt="Miniature 16:9 Option 1" 
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => downloadImage(thumbnailUrls.horizontal, `thumbnail_16_9_opt1_${prediction.title}.png`)}
+                          className="p-2 bg-white rounded-full text-slate-900 hover:scale-110 transition-transform"
+                          title="Télécharger"
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                        <a 
+                          href={thumbnailUrls.horizontal} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="p-2 bg-white rounded-full text-slate-900 hover:scale-110 transition-transform"
+                          title="Voir en plein écran"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </a>
+                      </div>
+                      <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/50 backdrop-blur-md text-white text-[8px] font-bold rounded uppercase">Option 1 (16:9)</div>
+                    </div>
+                    <div className="relative group/img rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video bg-slate-100 dark:bg-slate-800">
+                      <img 
+                        src={thumbnailUrls.vertical} 
+                        alt="Miniature 16:9 Option 2" 
+                        className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                        <button 
+                          onClick={() => downloadImage(thumbnailUrls.vertical, `thumbnail_16_9_opt2_${prediction.title}.png`)}
+                          className="p-2 bg-white rounded-full text-slate-900 hover:scale-110 transition-transform"
+                          title="Télécharger"
+                        >
+                          <Download className="h-4 w-4" />
+                        </button>
+                        <a 
+                          href={thumbnailUrls.vertical} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="p-2 bg-white rounded-full text-slate-900 hover:scale-110 transition-transform"
+                          title="Voir en plein écran"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </a>
+                      </div>
+                      <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/50 backdrop-blur-md text-white text-[8px] font-bold rounded uppercase">Option 2 (16:9)</div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-2">
                 {prediction.hashtags.map((tag, idx) => (
@@ -226,7 +333,7 @@ const SkeletonCard = () => (
   </div>
 );
 
-export function PoliticalPredictionsView() {
+export function PoliticalPredictionsView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
   const [predictions, setPredictions] = useState<Prediction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -263,7 +370,12 @@ export function PoliticalPredictionsView() {
   }, [loadPredictions]);
 
   return (
-    <div className="space-y-8 pb-12">
+    <ProGatedView 
+      title="Flash Stratégique Sénégal" 
+      description="Accédez aux prédictions politiques exclusives et aux analyses de tendances pour anticiper les prochains séismes électoraux."
+      setActiveTab={setActiveTab}
+    >
+      <div className="space-y-8 pb-12">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="max-w-2xl">
           <div className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 font-bold mb-2">
@@ -364,9 +476,6 @@ export function PoliticalPredictionsView() {
         </div>
       </div>
     </div>
+    </ProGatedView>
   );
-}
-
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(' ');
 }

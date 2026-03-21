@@ -95,13 +95,13 @@ export default function App() {
             <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
               {activeTab === 'landing' && <LandingView setActiveTab={setActiveTab} user={user} />}
               {activeTab === 'dashboard' && <DashboardView setActiveTab={setActiveTab} />}
-              {activeTab === 'keyword' && <KeywordToolView />}
-              {activeTab === 'video' && <VideoAnalyzerView />}
-              {activeTab === 'tags' && <TagGeneratorView />}
-              {activeTab === 'predictions' && <PoliticalPredictionsView />}
-              {activeTab === 'traffic' && <TrafficAnalyzerView />}
-              {activeTab === 'simulator' && <GrowthSimulatorView />}
-              {activeTab === 'checklist' && <SEOChecklistView />}
+              {activeTab === 'keyword' && <KeywordToolView setActiveTab={setActiveTab} />}
+              {activeTab === 'video' && <VideoAnalyzerView setActiveTab={setActiveTab} />}
+              {activeTab === 'tags' && <TagGeneratorView setActiveTab={setActiveTab} />}
+              {activeTab === 'predictions' && <PoliticalPredictionsView setActiveTab={setActiveTab} />}
+              {activeTab === 'traffic' && <TrafficAnalyzerView setActiveTab={setActiveTab} />}
+              {activeTab === 'simulator' && <GrowthSimulatorView setActiveTab={setActiveTab} />}
+              {activeTab === 'checklist' && <SEOChecklistView setActiveTab={setActiveTab} />}
               {activeTab === 'profile' && <ProfileView />}
               {activeTab === 'pricing' && <PricingView setActiveTab={setActiveTab} />}
               {activeTab === 'faq' && <FAQPage />}

@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { BarChart3, Loader2, Search, TrendingUp, Users, Clock, Sparkles, Youtube, Crown, DollarSign, Activity, Globe, Eye, Target, Zap, Rocket, CheckCircle2, RefreshCw } from 'lucide-react';
 import { analyzeTrafficSources, fetchChannelTopVideos, generateGrowthStrategy } from '../services/geminiService';
 import { useProMode } from '../context/ProModeContext';
+import { ProGatedView } from './ProGatedView';
 
-export function TrafficAnalyzerView() {
+export function TrafficAnalyzerView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
   const { isPro } = useProMode();
   const [channelName, setChannelName] = useState('');
   const [analysis, setAnalysis] = useState<any>(null);
@@ -55,7 +56,12 @@ export function TrafficAnalyzerView() {
   };
 
   return (
-    <div className="space-y-6">
+    <ProGatedView 
+      title="Analyseur de Trafic & Stratégie" 
+      description="Obtenez une analyse profonde de n'importe quelle chaîne et une stratégie de croissance sur-mesure générée par l'IA."
+      setActiveTab={setActiveTab}
+    >
+      <div className="space-y-6">
       <div className="bg-white dark:bg-[#1a1b20] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <BarChart3 className="h-6 w-6 text-indigo-500" />
@@ -435,5 +441,6 @@ export function TrafficAnalyzerView() {
         </div>
       )}
     </div>
+    </ProGatedView>
   );
 }

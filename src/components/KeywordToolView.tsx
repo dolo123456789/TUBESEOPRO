@@ -3,6 +3,7 @@ import { Search, Loader2, Info, Lock, X, List, Crown, History, Download, Globe, 
 import { generateKeywordData, generateBulkKeywordData } from '../services/geminiService';
 import { useSearchContext } from '../context/SearchContext';
 import { useProMode } from '../context/ProModeContext';
+import { ProGatedView } from './ProGatedView';
 
 const REGIONS = [
   { id: 'Global', name: 'Global', flag: '🌐' },
@@ -13,7 +14,7 @@ const REGIONS = [
   { id: 'Mali', name: 'Mali', flag: '🇲🇱' },
 ];
 
-export function KeywordToolView() {
+export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: (tab: string) => void }) {
   const [keyword, setKeyword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState<any>(null);

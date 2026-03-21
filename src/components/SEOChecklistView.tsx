@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle2, Circle, ClipboardCheck, Info, Lightbulb, AlertTriangle } from 'lucide-react';
 import { motion } from 'motion/react';
+import { ProGatedView } from './ProGatedView';
 
 interface ChecklistItem {
   id: string;
@@ -83,7 +84,7 @@ const CHECKLIST_ITEMS: ChecklistItem[] = [
   }
 ];
 
-export function SEOChecklistView() {
+export function SEOChecklistView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
   const [checkedItems, setCheckedItems] = useState<string[]>([]);
 
   useEffect(() => {

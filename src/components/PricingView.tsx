@@ -1,16 +1,77 @@
-import React, { useState } from 'react';
-import { Check, Crown, Zap, Shield, Star, Sparkles, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Check, Crown, Zap, Shield, Star, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
 import { useProMode } from '../context/ProModeContext';
 import { cn } from './Layout';
 import { auth } from '../firebase';
+import { Toast } from './Toast';
 
 export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
   const { isPro } = useProMode();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<'success' | 'error' | 'cancelled' | null>(null);
+  const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('payment');
+    if (status === 'success' || status === 'error' || status === 'cancelled') {
+      setPaymentStatus(status as any);
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
+  const handlePayment = async (plan: any) => {
+    if (!auth.currentUser) {
+      setToast({ message: "Veuillez vous connecter pour passer à Pro.", type: 'error' });
+      return;
+    }
+
+    setIsProcessing(true);
+    setToast(null);
+    try {
+      const response = await fetch('/api/paytech/create-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': auth.currentUser.email || ''
+        },
+        body: JSON.stringify({
+          email: auth.currentUser.email,
+          planName: plan.name,
+          amount: plan.amountXOF
+        })
+      });
+
+      const data = await response.json();
+      
+      // Handle special case for free activation (amount 0)
+      if (plan.amountXOF === 0 && data.success) {
+        setToast({ message: "Accès Pro à vie activé avec succès !", type: 'success' });
+        setTimeout(() => window.location.reload(), 2000);
+        return;
+      }
+
+      if (data.redirect_url) {
+        window.location.href = data.redirect_url;
+      } else {
+        const errorMsg = data.error || data.message || "Inconnu";
+        const details = data.details ? ` (${JSON.stringify(data.details)})` : "";
+        setToast({ message: `Erreur lors de l'initialisation du paiement: ${errorMsg}${details}`, type: 'error' });
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+      setToast({ message: "Une erreur est survenue lors de la connexion au service de paiement.", type: 'error' });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const plans = [
     {
       name: 'Gratuit',
-      price: '0€',
+      price: '0 FCFA',
+      amountXOF: 0,
       description: 'Pour les créateurs qui débutent sur YouTube.',
       features: [
         'Recherche de mots-clés (1/jour)',
@@ -25,9 +86,10 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
     },
     {
       name: 'Pro',
-      price: '24€',
+      price: '15 000 FCFA',
+      amountXOF: 15000,
       period: ' / 3 mois',
-      description: '24€ pour les 3 premiers mois, puis 24€/mois.',
+      description: 'Accès complet à toutes les fonctionnalités IA.',
       features: [
         'Recherche de mots-clés illimitée',
         'Données CPC & Tendances Pro',
@@ -45,7 +107,8 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
     },
     {
       name: 'Enterprise',
-      price: '99.9€',
+      price: '65 000 FCFA',
+      amountXOF: 65000,
       period: '/mois',
       description: 'Pour les agences et les réseaux de chaînes YouTube.',
       features: [
@@ -66,6 +129,26 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
 
   return (
     <div className="space-y-12 py-8">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      {paymentStatus === 'success' && (
+        <div className="bg-emerald-100 border border-emerald-200 text-emerald-800 px-6 py-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+          <Check className="h-6 w-6" />
+          <p className="font-bold">Félicitations ! Votre paiement a été validé. Vous êtes maintenant membre Pro.</p>
+        </div>
+      )}
+      {paymentStatus === 'error' && (
+        <div className="bg-red-100 border border-red-200 text-red-800 px-6 py-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+          <Shield className="h-6 w-6" />
+          <p className="font-bold">Désolé, une erreur est survenue lors de votre paiement. Veuillez réessayer.</p>
+        </div>
+      )}
+      {paymentStatus === 'cancelled' && (
+        <div className="bg-amber-100 border border-amber-200 text-amber-800 px-6 py-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+          <Zap className="h-6 w-6" />
+          <p className="font-bold">Le paiement a été annulé. Vous pouvez réessayer quand vous le souhaitez.</p>
+        </div>
+      )}
+
       <button
         onClick={() => setActiveTab('dashboard')}
         className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors mb-6"
@@ -77,6 +160,25 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
         <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
           Choisissez le plan qui vous fera <span className="text-red-600">décoller</span>
         </h1>
+        
+        {auth.currentUser?.email && ['adamadiop709@gmail.com', 'adjisanoudolo1@gmail.com', 'infosportmedia7@gmail.com'].includes(auth.currentUser.email) && !isPro && (
+          <div className="max-w-md mx-auto p-6 bg-gradient-to-r from-amber-500 to-orange-600 rounded-3xl shadow-xl border border-amber-400 animate-bounce">
+            <h3 className="text-white font-black text-xl mb-2 flex items-center justify-center gap-2">
+              <Crown className="h-6 w-6" />
+              ACCÈS SPÉCIAL DÉTECTÉ
+            </h3>
+            <p className="text-amber-50 text-sm mb-4">
+              En tant qu'utilisateur privilégié, vous pouvez activer votre accès Pro à vie gratuitement.
+            </p>
+            <button
+              onClick={() => handlePayment({ name: 'Pro à Vie', amountXOF: 0 })}
+              className="w-full py-3 bg-white text-amber-600 font-black rounded-xl hover:bg-amber-50 transition-colors shadow-lg"
+            >
+              ACTIVER PRO À VIE MAINTENANT
+            </button>
+          </div>
+        )}
+
         <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
           Des outils puissants pour chaque étape de votre aventure YouTube.
           Passez au niveau supérieur avec nos fonctionnalités IA avancées.
@@ -122,7 +224,7 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
                 {plan.period && <span className="text-slate-500 ml-1">{plan.period}</span>}
                 {plan.name === 'Pro' && (
                   <p className="text-xs text-amber-600 font-semibold mt-2 bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded">
-                    Puis 24€/mois après 3 mois
+                    Puis 15 000 FCFA/mois après 3 mois
                   </p>
                 )}
               </div>
@@ -137,21 +239,27 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
               </ul>
 
               <button
-                onClick={async () => {
-                  if (plan.name !== 'Gratuit') {
-                    window.location.href = "mailto:adjisanoudolo1@gmail.com?subject=Demande d'accès TubeSEO Pro";
+                onClick={() => {
+                  if (plan.name === 'Enterprise') {
+                    window.location.href = "mailto:adjisanoudolo1@gmail.com?subject=Demande d'accès TubeSEO Enterprise";
+                  } else if (plan.name === 'Pro') {
+                    handlePayment(plan);
                   }
                 }}
-                disabled={plan.name === 'Gratuit' || (plan.name === 'Pro' && isPro)}
+                disabled={plan.name === 'Gratuit' || (plan.name === 'Pro' && isPro) || isProcessing}
                 className={cn(
-                  "w-full py-3 px-6 rounded-xl font-bold transition-all duration-200",
+                  "w-full py-3 px-6 rounded-xl font-bold transition-all duration-200 flex items-center justify-center gap-2",
                   plan.highlight
                     ? "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20"
                     : "bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-900 dark:text-white",
-                  (plan.name === 'Gratuit' || (plan.name === 'Pro' && isPro)) && "opacity-50 cursor-not-allowed"
+                  (plan.name === 'Gratuit' || (plan.name === 'Pro' && isPro) || isProcessing) && "opacity-50 cursor-not-allowed"
                 )}
               >
-                {plan.buttonText}
+                {isProcessing && plan.name === 'Pro' ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  plan.buttonText
+                )}
               </button>
             </div>
           );
@@ -197,7 +305,7 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
             </div>
             <div className="space-y-2">
               <h4 className="font-bold text-indigo-900 dark:text-indigo-100">Paiements Sécurisés</h4>
-              <p className="text-sm text-indigo-700/70 dark:text-indigo-300/70">Transactions gérées par Paydunya avec une sécurité de niveau bancaire (PCI DSS Compliant).</p>
+              <p className="text-sm text-indigo-700/70 dark:text-indigo-300/70">Transactions gérées par PayTech avec une sécurité de niveau bancaire (PCI DSS Compliant).</p>
             </div>
           </div>
         </div>

@@ -3,10 +3,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { TrendingUp, Users, Search, Video, Eye, MousePointerClick, Tag, X, CheckCircle2, AlertCircle, PieChart, Activity, Info, Loader2, History, Gavel, ArrowRight } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
 import { cn } from './Layout';
-import { fetchPoliticalPredictions } from '../services/geminiService';
-
-const apiKey = typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : (import.meta as any).env?.VITE_GEMINI_API_KEY;
-const ai = new GoogleGenAI({ apiKey: apiKey || '' });
+import { ai, fetchPoliticalPredictions } from '../services/geminiService';
+import { useProMode } from '../context/ProModeContext';
 
 const data7Days = [
   { name: 'Lun', views: 4000, subs: 24 },
@@ -160,6 +158,7 @@ const statDetails: Record<string, any> = {
 };
 
 export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
+  const { isPro } = useProMode();
   const [timeRange, setTimeRange] = useState<'7' | '30'>('7');
   const [selectedAnalysis, setSelectedAnalysis] = useState<typeof recentAnalyses[0] | null>(null);
   const [selectedStat, setSelectedStat] = useState<string | null>(null);
@@ -187,7 +186,14 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
     loadLatestPrediction();
   }, []);
 
-  const currentData = timeRange === '7' ? data7Days : data30Days;
+  const handleStatClick = (tab: string) => {
+    const proTabs = ['traffic', 'predictions', 'simulator'];
+    if (proTabs.includes(tab) && !isPro) {
+      setActiveTab('pricing');
+      return;
+    }
+    setActiveTab(tab);
+  };
 
   const handleAnalyze = async (title: string) => {
     setIsAnalyzing(true);
@@ -204,6 +210,8 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
       setIsAnalyzing(false);
     }
   };
+
+  const currentData = timeRange === '7' ? data7Days : data30Days;
 
   return (
     <div className="space-y-8">
@@ -251,10 +259,20 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
               stat.span
             )}
           >
-            <div className={`absolute top-0 right-0 -mr-4 -mt-4 h-24 w-24 rounded-full bg-${stat.color}-500/5 blur-2xl group-hover:bg-${stat.color}-500/10 transition-colors`} />
+            <div className={cn("absolute top-0 right-0 -mr-4 -mt-4 h-24 w-24 rounded-full blur-2xl transition-colors", 
+              stat.color === 'indigo' ? 'bg-indigo-500/5 group-hover:bg-indigo-500/10' :
+              stat.color === 'emerald' ? 'bg-emerald-500/5 group-hover:bg-emerald-500/10' :
+              stat.color === 'amber' ? 'bg-amber-500/5 group-hover:bg-amber-500/10' :
+              'bg-violet-500/5 group-hover:bg-violet-500/10'
+            )} />
             
             <div className="flex items-center justify-between mb-4">
-              <div className={`p-2.5 rounded-xl bg-${stat.color}-500/10 text-${stat.color}-600 dark:text-${stat.color}-400`}>
+              <div className={cn("p-2.5 rounded-xl", 
+                stat.color === 'indigo' ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' :
+                stat.color === 'emerald' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
+                stat.color === 'amber' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
+                'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+              )}>
                 <stat.icon className="h-5 w-5" />
               </div>
               <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
@@ -363,34 +381,36 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-indigo-600 to-violet-700 p-6 shadow-lg shadow-indigo-600/20 text-white">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-bold flex items-center gap-2">
-                  <Gavel className="h-4 w-4 text-indigo-200" />
-                  Flash Stratégique
-                </h3>
-                <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded">Sénégal</span>
+            {isPro && (
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-indigo-600 to-violet-700 p-6 shadow-lg shadow-indigo-600/20 text-white">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-bold flex items-center gap-2">
+                    <Gavel className="h-4 w-4 text-indigo-200" />
+                    Flash Stratégique
+                  </h3>
+                  <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded">Sénégal</span>
+                </div>
+                {latestPrediction ? (
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-black leading-tight">{latestPrediction.title}</h4>
+                    <p className="text-[11px] text-indigo-100 line-clamp-3 leading-relaxed opacity-90">
+                      {latestPrediction.description}
+                    </p>
+                    <button 
+                      onClick={() => handleStatClick('predictions')}
+                      className="w-full mt-2 py-2 bg-white text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-colors"
+                    >
+                      Voir l'analyse complète
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-4 text-center">
+                    <Loader2 className="h-6 w-6 animate-spin mb-2 opacity-50" />
+                    <p className="text-xs text-indigo-100">Chargement de l'analyse...</p>
+                  </div>
+                )}
               </div>
-              {latestPrediction ? (
-                <div className="space-y-3">
-                  <h4 className="text-sm font-black leading-tight">{latestPrediction.title}</h4>
-                  <p className="text-[11px] text-indigo-100 line-clamp-3 leading-relaxed opacity-90">
-                    {latestPrediction.description}
-                  </p>
-                  <button 
-                    onClick={() => setActiveTab('predictions')}
-                    className="w-full mt-2 py-2 bg-white text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-indigo-50 transition-colors"
-                  >
-                    Voir l'analyse complète
-                  </button>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-4 text-center">
-                  <Loader2 className="h-6 w-6 animate-spin mb-2 opacity-50" />
-                  <p className="text-xs text-indigo-100">Chargement de l'analyse...</p>
-                </div>
-              )}
-            </div>
+            )}
           </div>
         </div>
 
@@ -534,7 +554,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                     handleAnalyze(selectedAnalysis.title);
                   } else {
                     setSelectedAnalysis(null);
-                    setActiveTab('video');
+                    handleStatClick('video');
                   }
                 }}
                 className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-colors shadow-lg shadow-indigo-600/20 flex items-center gap-2"
@@ -610,7 +630,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
               <button 
                 onClick={() => {
                   setSelectedStat(null);
-                  setActiveTab('traffic');
+                  handleStatClick('traffic');
                 }}
                 className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-colors shadow-lg shadow-indigo-600/20 flex items-center gap-2"
               >

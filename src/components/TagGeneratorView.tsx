@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Tags, Loader2, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
 import { generateTags } from '../services/geminiService';
+import { ProGatedView } from './ProGatedView';
 
-export function TagGeneratorView() {
+export function TagGeneratorView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
   const [topic, setTopic] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [tags, setTags] = useState<string[]>([]);

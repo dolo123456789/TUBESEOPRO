@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { TrendingUp, Users, Play, Loader2, Sparkles, Bot, ArrowRight } from 'lucide-react';
+import { ProGatedView } from './ProGatedView';
 
-export function GrowthSimulatorView() {
+export function GrowthSimulatorView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
   const [currentSubs, setCurrentSubs] = useState(1000);
   const [avgViews, setAvgViews] = useState(500);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -32,7 +33,12 @@ export function GrowthSimulatorView() {
   };
 
   return (
-    <div className="space-y-6">
+    <ProGatedView 
+      title="Simulateur de Croissance" 
+      description="Utilisez nos algorithmes prédictifs pour simuler la croissance de votre chaîne sur 12 mois et obtenir des conseils stratégiques."
+      setActiveTab={setActiveTab}
+    >
+      <div className="space-y-6">
       <div className="bg-white dark:bg-[#1a1b20] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
         <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Bot className="h-6 w-6 text-indigo-500" />
@@ -139,5 +145,6 @@ export function GrowthSimulatorView() {
         )}
       </div>
     </div>
+    </ProGatedView>
   );
 }

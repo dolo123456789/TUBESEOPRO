@@ -6,7 +6,7 @@ if (!apiKey) {
   console.warn('GEMINI_API_KEY is missing. AI features will not work.');
 }
 
-const ai = new GoogleGenAI({ apiKey: apiKey || '' });
+export const ai = new GoogleGenAI({ apiKey: apiKey || '' });
 
 // Cache configuration
 const CACHE_PREFIX = 'tubeseo_cache_';
@@ -110,23 +110,29 @@ function safeJsonParse(text: string | undefined, fallback: any) {
   }
 }
 
-export async function generateThumbnail(prompt: string, referenceImage?: string) {
+export async function generateThumbnail(prompt: string, referenceImage?: string, mode: 'mixed' | 'double_16_9' = 'mixed') {
   if (!apiKey) {
     throw new Error('API Key is missing. Please configure GEMINI_API_KEY.');
   }
 
   try {
-    const parts: any[] = [
-      {
-        text: `Generate a professional, high-quality, high-contrast YouTube thumbnail. It should be eye-catching and designed for high CTR. Style: Modern, vibrant, clean. 
-        
-CRITICAL INSTRUCTION FOR IDENTITY: You are provided with a reference image. You MUST use this reference image as the definitive source for the person's identity. Do not alter the facial features, appearance, or identity of the person in the reference image. The person in the generated thumbnail MUST be identical to the person in the reference image. If you are generating multiple images (e.g., 16:9 and 9:16), the person in ALL generated images MUST be identical to the person in the reference image. If the prompt mentions a specific public figure (e.g., a Senegalese wrestler or politician), ensure the generated image is a precise and accurate representation of that specific person, maintaining consistency with the reference image.
+    const basePrompt = `Generate a professional, high-quality, high-contrast YouTube thumbnail. It should be EXTREMELY eye-catching and designed for maximum CTR (Click-Through Rate). 
+    Style: Modern, vibrant, cinematic, and highly emotional.
+    
+    KEY ELEMENTS FOR HIGH CTR:
+    1. SUBJECT: A strong central subject with an intense, exaggerated emotional expression (shock, extreme surprise, intense determination, or fear).
+    2. CONTRAST: Use high-contrast colors and professional lighting (rim lighting, dramatic shadows).
+    3. BACKGROUND: A vibrant, detailed background that complements the subject but doesn't distract.
+    4. VISUAL HOOKS: Include subtle visual cues like arrows, circles, or "proof" elements if relevant to the prompt.
+    5. TEXT: If text is requested, it MUST be large, bold, and perfectly legible with a strong drop shadow or stroke.
+    
+CRITICAL INSTRUCTION FOR IDENTITY: You are provided with a reference image. You MUST use this reference image as the definitive source for the person's identity. Do not alter the facial features, appearance, or identity of the person in the reference image. The person in the generated thumbnail MUST be identical to the person in the reference image. If you are generating multiple images, the person in ALL generated images MUST be identical to the person in the reference image. If the prompt mentions a specific public figure (e.g., a Senegalese wrestler or politician), ensure the generated image is a precise and accurate representation of that specific person, maintaining consistency with the reference image.
 
 CRITICAL INSTRUCTION FOR TEXT: If the prompt asks for text on the image, you MUST spell it EXACTLY as requested. Pay extreme attention to spelling. DO NOT add extra letters, typos, or gibberish. Keep the text large, bold, and perfectly legible.
 
-Prompt: ${prompt}`,
-      },
-    ];
+Prompt: ${prompt}`;
+
+    const parts: any[] = [{ text: basePrompt }];
 
   if (referenceImage) {
       // Extract mime type and base64 data
@@ -171,10 +177,11 @@ Prompt: ${prompt}`,
       }
     }, parts);
 
-    // Generate 9:16 thumbnail
-    const response916 = await generateWithRetry('gemini-2.5-flash-image', {
+    // Generate second thumbnail (either 9:16 or another 16:9)
+    const secondAspectRatio = mode === 'double_16_9' ? '16:9' : '9:16';
+    const responseSecond = await generateWithRetry('gemini-2.5-flash-image', {
       imageConfig: {
-        aspectRatio: "9:16",
+        aspectRatio: secondAspectRatio,
         imageSize: "1K"
       }
     }, parts);
@@ -189,7 +196,7 @@ Prompt: ${prompt}`,
       }
     }
 
-    for (const part of response916.candidates?.[0]?.content?.parts || []) {
+    for (const part of responseSecond.candidates?.[0]?.content?.parts || []) {
       if (part.inlineData) {
         vertical = `data:image/png;base64,${part.inlineData.data}`;
         break;

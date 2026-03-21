@@ -76,18 +76,18 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
     { name: 'Accueil', id: 'landing', icon: BarChart2 },
     { name: 'Tableau de bord', id: 'dashboard', icon: BarChart2 },
     { name: 'Mots-clés', id: 'keyword', icon: Search },
-    { name: 'Analyseur Vidéo', id: 'video', icon: Video },
+    { name: 'Analyseur Vidéo', id: 'video', icon: Video, pro: true },
     { name: 'Générateur de Tags', id: 'tags', icon: Tags },
-    { name: 'Prédictions Politiques', id: 'predictions', icon: Gavel },
-    { name: 'Analyseur de Trafic', id: 'traffic', icon: BarChart3 },
-    { name: 'Simulateur de Croissance', id: 'simulator', icon: Bot },
+    { name: 'Prédictions Politiques', id: 'predictions', icon: Gavel, pro: true },
+    { name: 'Analyseur de Trafic', id: 'traffic', icon: BarChart3, pro: true },
+    { name: 'Simulateur de Croissance', id: 'simulator', icon: Bot, pro: true },
     { name: 'Checklist SEO', id: 'checklist', icon: ClipboardCheck },
     { name: 'Paramètres', id: 'settings', icon: Settings },
     { name: 'Mon Profil', id: 'profile', icon: User },
     { name: 'Tarifs', id: 'pricing', icon: CreditCard },
     { name: 'FAQ', id: 'faq', icon: HelpCircle },
     { name: 'Politique', id: 'policy', icon: Shield },
-  ];
+  ].filter(item => !item.pro || isPro);
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-[#0f1115] font-sans text-slate-900 dark:text-white overflow-hidden">

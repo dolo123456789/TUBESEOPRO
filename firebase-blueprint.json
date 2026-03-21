@@ -8,9 +8,11 @@
         "email": { "type": "string", "format": "email" },
         "ipAddress": { "type": "string" },
         "isBanned": { "type": "boolean" },
+        "isPro": { "type": "boolean" },
+        "proExpiresAt": { "type": "string", "format": "date-time" },
         "lastLoginAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["email", "ipAddress", "isBanned"]
+      "required": ["email", "ipAddress", "isBanned", "isPro"]
     },
     "SecurityLog": {
       "title": "SecurityLog",
