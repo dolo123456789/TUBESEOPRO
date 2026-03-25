@@ -44,8 +44,24 @@ import { Toast } from './Toast';
 export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const { isPro, toggleProMode } = useProMode();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(true);
+      }
+      if (e.key === 'Escape') {
+        setIsCommandPaletteOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -91,7 +107,8 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
   ].filter(item => !item.pro || isPro);
 
   return (
-    <div className="flex h-screen bg-white dark:bg-[#050505] font-sans text-slate-900 dark:text-white overflow-hidden">
+    <>
+      <div className="flex h-screen bg-white dark:bg-[#050505] font-sans text-slate-900 dark:text-white overflow-hidden texture-bg">
       {/* Mobile sidebar backdrop */}
       {isMobileMenuOpen && (
         <div 
@@ -102,7 +119,7 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-72 transform bg-white dark:bg-[#050505] border-r border-slate-100 dark:border-white/5 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] lg:static lg:translate-x-0",
+        "fixed inset-y-0 left-0 z-50 w-72 transform glass border-r border-slate-100 dark:border-white/5 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] lg:static lg:translate-x-0",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex h-24 items-center justify-between px-8">
@@ -172,13 +189,27 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden relative">
-        <header className="flex h-24 items-center justify-between border-b border-slate-100 dark:border-white/5 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-xl px-8 lg:px-12 z-30">
-          <button
-            className="text-slate-400 hover:text-slate-900 dark:hover:text-white lg:hidden"
-            onClick={() => setIsMobileMenuOpen(true)}
-          >
-            <Menu className="h-7 w-7" />
-          </button>
+        <header className="flex h-24 items-center justify-between border-b border-slate-100 dark:border-white/5 glass px-8 lg:px-12 z-30">
+          <div className="flex items-center gap-4 flex-1">
+            <button
+              className="text-slate-400 hover:text-slate-900 dark:hover:text-white lg:hidden"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu className="h-7 w-7" />
+            </button>
+            
+            <button 
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="hidden md:flex items-center gap-3 px-4 py-2.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all group w-full max-w-md"
+            >
+              <Search className="h-4 w-4 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold uppercase tracking-widest">Rechercher un outil...</span>
+              <div className="ml-auto flex items-center gap-1 px-1.5 py-0.5 bg-slate-200 dark:bg-white/10 rounded-md text-[10px] font-black">
+                <span>⌘</span>
+                <span>K</span>
+              </div>
+            </button>
+          </div>
           
           <div className="flex flex-1 justify-end">
             <div className="flex items-center gap-6">
@@ -265,5 +296,102 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
         </main>
       </div>
     </div>
+      
+      {/* Command Palette */}
+      <AnimatePresence>
+        {isCommandPaletteOpen && (
+          <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setIsCommandPaletteOpen(false)}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: -20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: -20 }}
+              className="relative w-full max-w-2xl glass rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20"
+            >
+              <div className="p-6 border-b border-white/10 flex items-center gap-4">
+                <Search className="h-6 w-6 text-indigo-500" />
+                <input 
+                  autoFocus
+                  type="text" 
+                  placeholder="Que cherchez-vous ?" 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent border-none focus:ring-0 text-lg font-bold placeholder:text-slate-500"
+                />
+                <div className="px-2 py-1 bg-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest text-slate-400">ESC</div>
+              </div>
+              
+              <div className="max-h-[60vh] overflow-y-auto p-4 custom-scrollbar">
+                <div className="space-y-1">
+                  <p className="px-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">Outils & Navigation</p>
+                  {navigation
+                    .filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                    .map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => {
+                            setActiveTab(item.id);
+                            setIsCommandPaletteOpen(false);
+                            setSearchQuery('');
+                          }}
+                          className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all group"
+                        >
+                          <div className="p-2 bg-slate-100 dark:bg-white/5 rounded-xl group-hover:bg-white/20 transition-colors">
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-sm font-black uppercase tracking-widest">{item.name}</p>
+                            <p className="text-[10px] opacity-60 font-bold uppercase tracking-tight">Accéder à {item.name}</p>
+                          </div>
+                          <ArrowRight className="ml-auto h-4 w-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                        </button>
+                      );
+                    })}
+                </div>
+                
+                {searchQuery && (
+                  <div className="mt-6 space-y-1">
+                    <p className="px-4 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">Actions Rapides</p>
+                    <button className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-red-600 hover:text-white transition-all group">
+                      <div className="p-2 bg-red-500/10 rounded-xl group-hover:bg-white/20 transition-colors">
+                        <Youtube className="h-5 w-5 text-red-600 group-hover:text-white" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-black uppercase tracking-widest">Analyser "{searchQuery}"</p>
+                        <p className="text-[10px] opacity-60 font-bold uppercase tracking-tight">Lancer une recherche SEO immédiate</p>
+                      </div>
+                    </button>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-4 bg-slate-50 dark:bg-white/5 border-t border-white/10 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                    <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-white/10 rounded">↑↓</span>
+                    <span>Naviguer</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-500">
+                    <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-white/10 rounded">ENTER</span>
+                    <span>Sélectionner</span>
+                  </div>
+                </div>
+                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">TubeSEO Pro v2.0</p>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
-}
+};
+
+export default Layout;

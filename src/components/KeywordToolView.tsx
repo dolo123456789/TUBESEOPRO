@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Loader2, Info, Lock, X, List, Crown, History, Download, Globe, ArrowUpDown, ExternalLink, Play } from 'lucide-react';
-import { generateKeywordData, generateBulkKeywordData } from '../services/geminiService';
+import { generateKeywordData, generateBulkKeywordData, fetchTopCPCNiches } from '../services/geminiService';
 import { useSearchContext } from '../context/SearchContext';
 import { useProMode } from '../context/ProModeContext';
 import { ProGatedView } from './ProGatedView';
@@ -25,6 +25,8 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
   const [region, setRegion] = useState('Global');
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [topNiches, setTopNiches] = useState<any[]>([]);
+  const [isTopNichesLoading, setIsTopNichesLoading] = useState(false);
   
   const { isPro } = useProMode();
   const { setLastKeyword } = useSearchContext();
@@ -34,6 +36,19 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
     if (savedHistory) {
       setSearchHistory(JSON.parse(savedHistory));
     }
+
+    const loadTopNiches = async () => {
+      setIsTopNichesLoading(true);
+      try {
+        const niches = await fetchTopCPCNiches('Sénégal');
+        setTopNiches(niches);
+      } catch (err) {
+        console.error('Error loading top niches:', err);
+      } finally {
+        setIsTopNichesLoading(false);
+      }
+    };
+    loadTopNiches();
   }, []);
 
   useEffect(() => {
@@ -88,9 +103,9 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
     let csvContent = "data:text/csv;charset=utf-8,";
     
     if (bulkData) {
-      csvContent += "Mot-cle,Volume,Concurrence,Score Global\n";
+      csvContent += `Mot-cle,Volume,Concurrence,Score Global${isPro ? ",CPC Global,CPC Senegal" : ""}\n`;
       bulkData.forEach(item => {
-        csvContent += `"${item.keyword}","${item.search_volume}","${item.competition}",${item.overall_score}\n`;
+        csvContent += `"${item.keyword}","${item.search_volume}","${item.competition}",${item.overall_score}${isPro ? `,"${item.cpc || 0}","${item.senegal_cpc || 0}"` : ""}\n`;
       });
     } else if (data) {
       csvContent += "Type,Mot-cle,Volume,Score\n";
@@ -343,6 +358,12 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
           >
             Top Vidéos
           </button>
+          <button 
+            onClick={() => setActiveTab('top_cpc')}
+            className={`whitespace-nowrap pb-4 -mb-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'top_cpc' ? 'border-indigo-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+          >
+            Meilleurs CPC Sénégal 🇸🇳
+          </button>
         </div>
         
         <div className="flex items-center gap-2">
@@ -373,6 +394,57 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
           <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mb-4" />
           <p className="text-slate-500 dark:text-slate-400">Analyse du mot-clé en cours...</p>
         </div>
+      ) : activeTab === 'top_cpc' ? (
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-[#1a1b20] rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center">
+            <h3 className="text-2xl font-black tracking-tight uppercase mb-2">Les Niches les plus rentables au Sénégal 🇸🇳</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-8">Basé sur les données publicitaires actuelles (Google Ads & YouTube)</p>
+            
+            {isTopNichesLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 text-indigo-500 animate-spin mb-4" />
+                <p className="text-xs text-slate-500 uppercase font-bold tracking-widest">Récupération des meilleures opportunités...</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {topNiches.map((niche, idx) => (
+                  <div key={idx} className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-[#2a2b30]/30 rounded-2xl border border-slate-100 dark:border-slate-800/50 hover:border-indigo-500/50 transition-all group text-left">
+                    <div className="h-12 w-12 bg-indigo-500/10 text-indigo-500 rounded-xl flex items-center justify-center font-black text-lg shrink-0 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+                      {idx + 1}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-black uppercase tracking-tight text-slate-900 dark:text-white">{niche.niche}</h4>
+                        <span className="text-emerald-500 font-black text-sm">${niche.cpc.toFixed(2)}</span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">{niche.reason}</p>
+                      <button 
+                        onClick={() => handleSearch(undefined, niche.niche)}
+                        className="mt-3 text-[10px] font-black uppercase tracking-widest text-indigo-500 hover:text-indigo-600 flex items-center gap-1"
+                      >
+                        Analyser cette niche <ArrowUpDown className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {!isPro && (
+              <div className="mt-8 p-6 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                <Crown className="h-8 w-8 text-amber-500 mx-auto mb-3" />
+                <h4 className="text-lg font-black uppercase tracking-tight text-amber-700 dark:text-amber-500 mb-2">Accès Limité</h4>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">Passez au mode Pro pour voir toutes les niches à haut CPC et obtenir des analyses détaillées.</p>
+                <button 
+                  onClick={() => document.getElementById('pricing-section')?.scrollIntoView({ behavior: 'smooth' })}
+                  className="bg-amber-500 hover:bg-amber-600 text-white font-black px-6 py-2 rounded-xl text-xs uppercase tracking-widest transition-all"
+                >
+                  Débloquer le mode Pro
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       ) : error ? (
         <div className="bg-indigo-100 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-400 p-4 rounded-xl text-center">
           {error}
@@ -391,7 +463,8 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
                   <th className="px-4 py-3 font-medium rounded-tl-lg">Mot-clé</th>
                   <th className="px-4 py-3 font-medium">Volume</th>
                   <th className="px-4 py-3 font-medium">Concurrence</th>
-                  {isPro && <th className="px-4 py-3 font-medium">CPC</th>}
+                  {isPro && <th className="px-4 py-3 font-medium">CPC Global</th>}
+                  {isPro && <th className="px-4 py-3 font-medium">CPC Sénégal</th>}
                   {isPro && <th className="px-4 py-3 font-medium">Pro Insight</th>}
                   <th className="px-4 py-3 font-medium rounded-tr-lg">Score Global</th>
                 </tr>
@@ -415,6 +488,11 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
                     {isPro && (
                       <td className="px-4 py-3 text-amber-600 dark:text-amber-500">
                         {item.cpc !== undefined ? `$${Number(item.cpc || 0).toFixed(2)}` : '-'}
+                      </td>
+                    )}
+                    {isPro && (
+                      <td className="px-4 py-3 text-emerald-600 dark:text-emerald-500">
+                        {item.senegal_cpc !== undefined ? `$${Number(item.senegal_cpc || 0).toFixed(2)}` : '-'}
                       </td>
                     )}
                     {isPro && (
@@ -521,11 +599,30 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
               ) : data.cpc !== undefined ? (
                 <div className="bg-white dark:bg-[#1a1b20] rounded-xl border border-amber-200 dark:border-amber-500/30 p-6 flex flex-col gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="relative group">
+                      <div className="absolute -top-2 -right-2 flex items-center gap-1 px-1.5 py-0.5 bg-red-500 text-[8px] font-black text-white rounded-full animate-pulse">
+                        <div className="h-1 w-1 bg-white rounded-full" />
+                        LIVE
+                      </div>
                       <p className="text-amber-700 dark:text-amber-500 font-bold mb-1 flex items-center gap-2">
-                        <Crown className="h-4 w-4" /> Données Pro : CPC estimé
+                        <Crown className="h-4 w-4" /> CPC Global (USD)
                       </p>
                       <p className="text-2xl font-bold text-slate-900 dark:text-white">${Number(data.cpc || 0).toFixed(2)}</p>
+                    </div>
+                    <div className="relative group">
+                      <div className="absolute -top-2 -right-2 flex items-center gap-1 px-1.5 py-0.5 bg-emerald-500 text-[8px] font-black text-white rounded-full animate-pulse">
+                        <div className="h-1 w-1 bg-white rounded-full" />
+                        LIVE
+                      </div>
+                      <p className="text-emerald-600 dark:text-emerald-500 font-bold mb-1 flex items-center gap-2">
+                        🇸🇳 CPC Sénégal (USD / XOF)
+                      </p>
+                      <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                        ${Number(data.senegal_cpc || 0).toFixed(2)} 
+                        <span className="text-sm font-normal text-slate-500 ml-2">
+                          (~{Math.round(Number(data.senegal_cpc || 0) * 600)} FCFA)
+                        </span>
+                      </p>
                     </div>
                     <div className="text-right">
                       <p className="text-amber-700 dark:text-amber-500 font-bold mb-1">Tendance de recherche</p>
@@ -535,9 +632,14 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
                     </div>
                   </div>
                   {data.pro_insight && (
-                    <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-                      <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">Aperçu stratégique Pro</p>
-                      <p className="text-sm text-slate-900 dark:text-white italic">"{data.pro_insight}"</p>
+                    <div className="border-t border-slate-200 dark:border-slate-800 pt-4 flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold mb-1">Aperçu stratégique Pro</p>
+                        <p className="text-sm text-slate-900 dark:text-white italic">"{data.pro_insight}"</p>
+                      </div>
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-lg shrink-0 ml-4">
+                        Mise à jour: {new Date().toLocaleTimeString()}
+                      </div>
                     </div>
                   )}
                   {data.difficulty_score !== undefined && (

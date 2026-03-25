@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Video, Loader2, CheckCircle2, AlertCircle, TrendingUp, Copy, Sparkles, Crown, Image as ImageIcon, Wand2, X, Target, Zap, Lightbulb, Users } from 'lucide-react';
+import { Video, Loader2, CheckCircle2, AlertCircle, TrendingUp, Copy, Sparkles, Crown, Image as ImageIcon, Wand2, X, Target, Zap, Lightbulb, Users, MessageSquare, Download } from 'lucide-react';
 import { analyzeVideoSEO, generateThumbnail } from '../services/geminiService';
 import { useProMode } from '../context/ProModeContext';
 import { Toast } from './Toast';
 import { ProGatedView } from './ProGatedView';
+import { GoogleGenAI } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export function VideoAnalyzerView({ setActiveTab }: { setActiveTab: (tab: string) => void }) {
   const [title, setTitle] = useState('');
@@ -41,6 +44,26 @@ export function VideoAnalyzerView({ setActiveTab }: { setActiveTab: (tab: string
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const [isGeneratingHooks, setIsGeneratingHooks] = useState(false);
+  const [hooks, setHooks] = useState<string[]>([]);
+
+  const generateHooks = async () => {
+    if (!data) return;
+    setIsGeneratingHooks(true);
+    try {
+      const response = await ai.models.generateContent({
+        model: 'gemini-3-flash-preview',
+        contents: `Basé sur cette analyse SEO de vidéo YouTube : ${JSON.stringify(data)}, générez 5 "hooks" (accroches) viraux pour le début de la vidéo. Chaque hook doit être court, percutant et conçu pour maximiser la rétention. Répondez uniquement avec une liste de 5 hooks, un par ligne.`,
+      });
+      const hooksList = response.text?.split('\n').filter(h => h.trim() !== '').map(h => h.replace(/^\d+\.\s*/, '')) || [];
+      setHooks(hooksList);
+    } catch (error) {
+      console.error('Error generating hooks:', error);
+    } finally {
+      setIsGeneratingHooks(false);
+    }
   };
 
   const handleAnalyze = async (e: React.FormEvent) => {
@@ -446,6 +469,65 @@ export function VideoAnalyzerView({ setActiveTab }: { setActiveTab: (tab: string
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Script Hooks Section */}
+            <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-indigo-500" />
+                    Hooks Viraux (IA)
+                  </h3>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Accroches pour maximiser la rétention</p>
+                </div>
+                <button 
+                  onClick={generateHooks}
+                  disabled={isGeneratingHooks}
+                  className="p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-50"
+                >
+                  {isGeneratingHooks ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                </button>
+              </div>
+
+              {hooks.length > 0 ? (
+                <div className="space-y-3">
+                  {hooks.map((hook, index) => (
+                    <div 
+                      key={index}
+                      className="p-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10 group hover:border-indigo-500/50 transition-all"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5 h-5 w-5 rounded-full bg-indigo-500/10 text-indigo-500 flex items-center justify-center text-[10px] font-black shrink-0">
+                          {index + 1}
+                        </div>
+                        <p className="text-sm font-medium leading-relaxed">{hook}</p>
+                        <button 
+                          onClick={() => {
+                            navigator.clipboard.writeText(hook);
+                          }}
+                          className="ml-auto p-1.5 opacity-0 group-hover:opacity-100 hover:bg-white dark:hover:bg-white/10 rounded-lg transition-all"
+                        >
+                          <Download className="h-4 w-4 text-slate-400" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-8 flex flex-col items-center justify-center text-center">
+                  <div className="p-3 bg-indigo-500/10 rounded-full text-indigo-500 mb-3">
+                    <MessageSquare className="h-6 w-6" />
+                  </div>
+                  <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Aucun hook généré</p>
+                  <button 
+                    onClick={generateHooks}
+                    className="px-4 py-2 bg-slate-100 dark:bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all"
+                  >
+                    Générer des hooks
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm">

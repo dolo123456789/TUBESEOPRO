@@ -238,15 +238,16 @@ export async function generateKeywordData(keyword: string, isPro: boolean = fals
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
-  const proPrompt = isPro ? "En tant que fonctionnalité PRO, fournissez une estimation très précise du CPC (Coût par Clic) en USD, une tendance de recherche détaillée (En hausse, En baisse, Stable), et un 'pro_insight' qui est un conseil stratégique d'une phrase pour ce mot-clé. Ajoutez également une analyse de la 'difficulté' de classement (0-100) et pourquoi." : "";
+  const proPrompt = isPro ? "En tant que fonctionnalité PRO, fournissez une estimation très précise du CPC (Coût par Clic) en USD, une estimation du CPC spécifiquement pour le Sénégal en USD (senegal_cpc), une tendance de recherche détaillée (En hausse, En baisse, Stable), et un 'pro_insight' qui est un conseil stratégique d'une phrase pour ce mot-clé. Ajoutez également une analyse de la 'difficulté' de classement (0-100) et pourquoi." : "";
   const proProperties = isPro ? {
-    cpc: { type: Type.NUMBER, description: "Estimation du CPC en USD" },
+    cpc: { type: Type.NUMBER, description: "Estimation du CPC Global en USD" },
+    senegal_cpc: { type: Type.NUMBER, description: "Estimation du CPC spécifiquement pour le Sénégal en USD" },
     trend: { type: Type.STRING, description: "En hausse, En baisse, ou Stable" },
     pro_insight: { type: Type.STRING, description: "Un conseil stratégique d'une phrase pour ce mot-clé" },
     difficulty_score: { type: Type.NUMBER, description: "Difficulté de classement de 0 à 100" },
     difficulty_reason: { type: Type.STRING, description: "Explication de la difficulté" }
   } : {};
-  const proRequired = isPro ? ["cpc", "trend", "pro_insight", "difficulty_score", "difficulty_reason"] : [];
+  const proRequired = isPro ? ["cpc", "senegal_cpc", "trend", "pro_insight", "difficulty_score", "difficulty_reason"] : [];
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -345,13 +346,14 @@ export async function generateBulkKeywordData(keywords: string[], isPro: boolean
   const cached = getCache(cacheKey);
   if (cached) return cached;
 
-  const proPrompt = isPro ? "En tant que fonctionnalité PRO, fournissez une estimation très précise du CPC (Coût par Clic) en USD, une tendance de recherche détaillée (En hausse, En baisse, Stable), et un 'pro_insight' qui est un conseil stratégique d'une phrase pour ce mot-clé." : "";
+  const proPrompt = isPro ? "En tant que fonctionnalité PRO, fournissez une estimation très précise du CPC (Coût par Clic) en USD, une estimation du CPC spécifiquement pour le Sénégal en USD (senegal_cpc), une tendance de recherche détaillée (En hausse, En baisse, Stable), et un 'pro_insight' qui est un conseil stratégique d'une phrase pour ce mot-clé." : "";
   const proProperties = isPro ? {
-    cpc: { type: Type.NUMBER, description: "Estimation du CPC en USD" },
+    cpc: { type: Type.NUMBER, description: "Estimation du CPC Global en USD" },
+    senegal_cpc: { type: Type.NUMBER, description: "Estimation du CPC spécifiquement pour le Sénégal en USD" },
     trend: { type: Type.STRING, description: "En hausse, En baisse, ou Stable" },
     pro_insight: { type: Type.STRING, description: "Un conseil stratégique d'une phrase pour ce mot-clé" }
   } : {};
-  const proRequired = isPro ? ["cpc", "trend", "pro_insight"] : [];
+  const proRequired = isPro ? ["cpc", "senegal_cpc", "trend", "pro_insight"] : [];
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -727,6 +729,32 @@ export async function fetchTrendingVideos(query: string, category: string = 'All
   const result = safeJsonParse(response.text, []);
   if (result && result.length > 0) setCache(cacheKey, result);
   return result;
+}
+
+export async function fetchTopCPCNiches(region: string = 'Sénégal'): Promise<any[]> {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Identifiez les 10 niches ou mots-clés avec le CPC (Coût par Clic) le plus élevé pour YouTube et Google Ads spécifiquement au ${region}. 
+      Pour chaque niche, fournissez le nom de la niche, une estimation du CPC en USD (nombre uniquement), et une brève explication de pourquoi elle est lucrative.
+      Répondez uniquement en format JSON avec la structure suivante:
+      [
+        {
+          "niche": "Nom de la niche",
+          "cpc": 5.50,
+          "reason": "Explication brève"
+        }
+      ]`,
+      config: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    return JSON.parse(response.text || '[]');
+  } catch (error) {
+    console.error('Error fetching top CPC niches:', error);
+    return [];
+  }
 }
 
 export async function fetchPoliticalPredictions(forceRefresh: boolean = false) {
