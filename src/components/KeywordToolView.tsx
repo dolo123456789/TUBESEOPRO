@@ -145,13 +145,13 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
   const getScoreColor = (score: number) => {
     if (score >= 60) return 'text-emerald-400';
     if (score >= 40) return 'text-amber-400';
-    return 'text-red-400';
+    return 'text-indigo-400';
   };
 
   const getScoreStroke = (score: number) => {
     if (score >= 60) return '#34d399';
     if (score >= 40) return '#fbbf24';
-    return '#f87171';
+    return '#4f46e5';
   };
 
   const renderKeywordList = (list: any[], title: string, description: string, emptyMessage: string) => {
@@ -164,7 +164,7 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
             {title} <Info className="h-4 w-4 text-slate-500" />
           </h3>
           {isPro && list && list.length > 0 && (
-            <button onClick={exportToCSV} className="text-xs flex items-center gap-1 text-slate-500 hover:text-blue-500 transition-colors">
+            <button onClick={exportToCSV} className="text-xs flex items-center gap-1 text-slate-500 hover:text-indigo-500 transition-colors">
               <Download className="h-3 w-3" /> Exporter
             </button>
           )}
@@ -190,7 +190,7 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
                 {sortedData.map((item, i) => (
                   <tr key={i} className="border-b border-slate-100 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-[#2a2b30]/30 transition-colors">
                     <td className="px-4 py-3 text-slate-900 dark:text-white font-medium">
-                      <button onClick={() => handleSearch(undefined, item.keyword)} className="hover:text-blue-500 transition-colors text-left">
+                      <button onClick={() => handleSearch(undefined, item.keyword)} className="hover:text-indigo-500 transition-colors text-left">
                         {item.keyword}
                       </button>
                     </td>
@@ -206,7 +206,7 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
             <p className="text-slate-500 dark:text-slate-400 mb-2">{emptyMessage}</p>
             <p className="text-slate-900 dark:text-white font-bold mb-4">{keyword}</p>
             <p className="text-slate-500 text-sm mb-6">Essayez de rechercher un terme plus large</p>
-            <a href="#" className="text-blue-600 dark:text-blue-500 text-sm hover:underline">Curieux de savoir comment fonctionnent les {title.toLowerCase()} ? Laissez-nous vous expliquer</a>
+            <a href="#" className="text-indigo-600 dark:text-indigo-500 text-sm hover:underline">Curieux de savoir comment fonctionnent les {title.toLowerCase()} ? Laissez-nous vous expliquer</a>
           </div>
         )}
 
@@ -279,7 +279,7 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
 
       {/* Search Bar */}
       <form onSubmit={handleSearch} className="relative mb-6">
-        <div className="relative flex items-start bg-slate-100 dark:bg-[#1a1b20] rounded-xl border border-slate-200 dark:border-slate-800 focus-within:border-blue-500 transition-colors overflow-hidden">
+        <div className="relative flex items-start bg-slate-100 dark:bg-[#1a1b20] rounded-xl border border-slate-200 dark:border-slate-800 focus-within:border-indigo-500 transition-colors overflow-hidden">
           {isBulkMode ? (
             <textarea
               value={keyword}
@@ -303,7 +303,7 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
           )}
         </div>
         <div className="mt-4 flex justify-end">
-          <button type="submit" disabled={isLoading || !keyword.trim()} className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2">
+          <button type="submit" disabled={isLoading || !keyword.trim()} className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2">
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             {isBulkMode ? 'Analyser les mots-clés' : 'Analyser le mot-clé'}
           </button>
@@ -315,31 +315,31 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
         <div className="flex items-center gap-6 overflow-x-auto hide-scrollbar">
           <button 
             onClick={() => setActiveTab('overview')}
-            className={`whitespace-nowrap pb-4 -mb-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'overview' ? 'border-blue-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`whitespace-nowrap pb-4 -mb-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'overview' ? 'border-indigo-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
             Aperçu
           </button>
           <button 
             onClick={() => setActiveTab('related')}
-            className={`whitespace-nowrap pb-4 -mb-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'related' ? 'border-blue-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`whitespace-nowrap pb-4 -mb-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'related' ? 'border-indigo-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
             Mots clés associés
           </button>
           <button 
             onClick={() => setActiveTab('matching')}
-            className={`whitespace-nowrap pb-4 -mb-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'matching' ? 'border-blue-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`whitespace-nowrap pb-4 -mb-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'matching' ? 'border-indigo-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
             Termes correspondants
           </button>
           <button 
             onClick={() => setActiveTab('questions')}
-            className={`whitespace-nowrap pb-4 -mb-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'questions' ? 'border-blue-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`whitespace-nowrap pb-4 -mb-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'questions' ? 'border-indigo-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
             Des questions
           </button>
           <button 
             onClick={() => setActiveTab('top_videos')}
-            className={`whitespace-nowrap pb-4 -mb-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'top_videos' ? 'border-blue-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
+            className={`whitespace-nowrap pb-4 -mb-4 border-b-2 text-sm font-medium transition-colors ${activeTab === 'top_videos' ? 'border-indigo-500 text-slate-900 dark:text-white' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'}`}
           >
             Top Vidéos
           </button>
@@ -348,7 +348,7 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
         <div className="flex items-center gap-2">
           <button 
             onClick={() => setIsBulkMode(false)}
-            className={`${!isBulkMode ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-slate-100 dark:bg-[#1a1b20] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'} px-4 py-1.5 rounded-full text-sm font-medium transition-colors`}
+            className={`${!isBulkMode ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-slate-100 dark:bg-[#1a1b20] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'} px-4 py-1.5 rounded-full text-sm font-medium transition-colors`}
           >
             Recherche simple
           </button>
@@ -361,7 +361,7 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
                 setError("La recherche en masse (Bulk Search) est une fonctionnalité Pro. Veuillez activer le mode Pro pour l'utiliser.");
               }
             }}
-            className={`flex items-center gap-2 ${isBulkMode ? 'bg-blue-600 hover:bg-blue-500 text-white' : 'bg-slate-100 dark:bg-[#1a1b20] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'} px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${!isPro ? 'opacity-80' : ''}`}
+            className={`flex items-center gap-2 ${isBulkMode ? 'bg-indigo-600 hover:bg-indigo-500 text-white' : 'bg-slate-100 dark:bg-[#1a1b20] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800'} px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${!isPro ? 'opacity-80' : ''}`}
           >
             {!isPro ? <Lock className="h-4 w-4 text-amber-500" /> : <List className="h-4 w-4" />} Recherche en masse
           </button>
@@ -370,11 +370,11 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="h-10 w-10 text-blue-500 animate-spin mb-4" />
+          <Loader2 className="h-10 w-10 text-indigo-500 animate-spin mb-4" />
           <p className="text-slate-500 dark:text-slate-400">Analyse du mot-clé en cours...</p>
         </div>
       ) : error ? (
-        <div className="bg-red-100 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-400 p-4 rounded-xl text-center">
+        <div className="bg-indigo-100 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-indigo-400 p-4 rounded-xl text-center">
           {error}
         </div>
       ) : bulkData ? (
@@ -484,7 +484,7 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
                 <div>
                   <p className="text-slate-500 dark:text-slate-400 text-sm mb-1">Volume de recherche</p>
                   <p className="text-2xl font-bold text-slate-900 dark:text-white mb-2">{data.search_volume}</p>
-                  <span className="bg-red-100 dark:bg-red-500/10 text-red-700 dark:text-red-400 text-xs px-2 py-1 rounded border border-red-200 dark:border-red-500/20">
+                  <span className="bg-indigo-100 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 text-xs px-2 py-1 rounded border border-indigo-200 dark:border-indigo-500/20">
                     {data.search_volume_trend}
                   </span>
                 </div>
@@ -529,7 +529,7 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
                     </div>
                     <div className="text-right">
                       <p className="text-amber-700 dark:text-amber-500 font-bold mb-1">Tendance de recherche</p>
-                      <p className={`text-xl font-bold capitalize ${data.trend === 'Up' ? 'text-emerald-500' : data.trend === 'Down' ? 'text-red-500' : 'text-slate-900 dark:text-white'}`}>
+                      <p className={`text-xl font-bold capitalize ${data.trend === 'Up' ? 'text-emerald-500' : data.trend === 'Down' ? 'text-indigo-500' : 'text-slate-900 dark:text-white'}`}>
                         {data.trend}
                       </p>
                     </div>
@@ -544,13 +544,13 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
                     <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Difficulté de classement</p>
-                        <span className={`text-sm font-bold ${data.difficulty_score > 70 ? 'text-red-500' : data.difficulty_score > 40 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                        <span className={`text-sm font-bold ${data.difficulty_score > 70 ? 'text-indigo-500' : data.difficulty_score > 40 ? 'text-amber-500' : 'text-emerald-500'}`}>
                           {data.difficulty_score}/100
                         </span>
                       </div>
                       <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden mb-2">
                         <div 
-                          className={`h-full transition-all duration-1000 ${data.difficulty_score > 70 ? 'bg-red-500' : data.difficulty_score > 40 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                          className={`h-full transition-all duration-1000 ${data.difficulty_score > 70 ? 'bg-indigo-500' : data.difficulty_score > 40 ? 'bg-amber-500' : 'bg-emerald-500'}`}
                           style={{ width: `${data.difficulty_score}%` }}
                         />
                       </div>
@@ -628,11 +628,11 @@ export function KeywordToolView({ setActiveTab: setParentTab }: { setActiveTab: 
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 mb-1 group-hover:text-blue-500 transition-colors">
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 mb-1 group-hover:text-indigo-500 transition-colors">
                           {video.title}
                         </h4>
                         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-500 dark:text-slate-400">
-                          <span className="font-bold text-blue-500 flex items-center gap-1">
+                          <span className="font-bold text-indigo-500 flex items-center gap-1">
                             {video.channel} <ExternalLink className="h-2 w-2" />
                           </span>
                           <span>•</span>

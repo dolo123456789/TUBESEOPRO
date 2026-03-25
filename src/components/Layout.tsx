@@ -22,17 +22,16 @@ import {
   LogOut,
   Settings,
   LogIn,
-  Gavel
+  Gavel,
+  ArrowRight
 } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useProMode } from '../context/ProModeContext';
 import { auth } from '../firebase';
+import { cn } from '../lib/utils';
 import { signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface LayoutProps {
   children: ReactNode;
@@ -75,54 +74,54 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
 
   const navigation = [
     { name: 'Accueil', id: 'landing', icon: BarChart2 },
-    { name: 'Tableau de bord', id: 'dashboard', icon: BarChart2 },
-    { name: 'SEO Chaîne', id: 'channel-seo', icon: Youtube },
-    { name: 'Mots-clés', id: 'keyword', icon: Search },
-    { name: 'Analyseur Vidéo', id: 'video', icon: Video, pro: true },
-    { name: 'Générateur de Tags', id: 'tags', icon: Tags },
-    { name: 'Prédictions Politiques', id: 'predictions', icon: Gavel, pro: true },
-    { name: 'Analyseur de Trafic', id: 'traffic', icon: BarChart3, pro: true },
-    { name: 'Simulateur de Croissance', id: 'simulator', icon: Bot, pro: true },
+    { name: 'Dashboard', id: 'dashboard', icon: BarChart2 },
+    { name: 'Keyword Tool', id: 'keyword', icon: Search },
+    { name: 'Video Analyzer', id: 'video', icon: Video, pro: true },
+    { name: 'Tag Generator', id: 'tags', icon: Tags },
+    { name: 'Channel Audit', id: 'channel-seo', icon: Users },
+    { name: 'Trending Videos', id: 'predictions', icon: TrendingUp, pro: true },
+    { name: 'Traffic Analyzer', id: 'traffic', icon: BarChart3, pro: true },
+    { name: 'Growth Simulator', id: 'simulator', icon: Bot, pro: true },
     { name: 'Checklist SEO', id: 'checklist', icon: ClipboardCheck },
-    { name: 'Paramètres', id: 'settings', icon: Settings },
-    { name: 'Mon Profil', id: 'profile', icon: User },
-    { name: 'Tarifs', id: 'pricing', icon: CreditCard },
+    { name: 'Settings', id: 'settings', icon: Settings },
+    { name: 'Profile', id: 'profile', icon: User },
+    { name: 'Pricing', id: 'pricing', icon: CreditCard },
     { name: 'FAQ', id: 'faq', icon: HelpCircle },
-    { name: 'Politique', id: 'policy', icon: Shield },
+    { name: 'Policy', id: 'policy', icon: Shield },
   ].filter(item => !item.pro || isPro);
 
   return (
-    <div className="flex h-screen bg-slate-50 dark:bg-[#0f1115] font-sans text-slate-900 dark:text-white overflow-hidden">
+    <div className="flex h-screen bg-white dark:bg-[#050505] font-sans text-slate-900 dark:text-white overflow-hidden">
       {/* Mobile sidebar backdrop */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 z-20 bg-black/60 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-md lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-30 w-64 transform bg-white dark:bg-[#0f1115] border-r border-slate-200 dark:border-slate-800 transition-all duration-300 ease-in-out lg:static lg:translate-x-0",
+        "fixed inset-y-0 left-0 z-50 w-72 transform bg-white dark:bg-[#050505] border-r border-slate-100 dark:border-white/5 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] lg:static lg:translate-x-0",
         isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <div className="flex h-16 items-center justify-between px-6 border-b border-slate-200 dark:border-slate-800">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-red-500 to-red-700 shadow-lg shadow-red-500/20">
-              <TrendingUp className="h-5 w-5 text-white" />
+        <div className="flex h-24 items-center justify-between px-8">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-600 shadow-lg shadow-red-600/20">
+              <TrendingUp className="h-6 w-6 text-white" />
             </div>
-            <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">TubeSEO<span className="text-red-600">Pro</span></span>
+            <span className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">TubeSEO<span className="text-red-600">Pro</span></span>
           </div>
           <button 
-            className="lg:hidden text-slate-500 hover:text-slate-700 dark:hover:text-white"
+            className="lg:hidden text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <X className="h-5 w-5" />
+            <X className="h-6 w-6" />
           </button>
         </div>
 
-        <div className="flex flex-col h-[calc(100vh-64px)] justify-between py-6">
-          <nav className="px-4 space-y-1 overflow-y-auto custom-scrollbar">
+        <div className="flex flex-col h-[calc(100vh-96px)] justify-between py-8">
+          <nav className="px-6 space-y-2 overflow-y-auto custom-scrollbar">
             {navigation.map((item) => {
               const Icon = item.icon;
               const isActive = activeTab === item.id;
@@ -134,104 +133,135 @@ export function Layout({ children, activeTab, setActiveTab }: LayoutProps) {
                     setIsMobileMenuOpen(false);
                   }}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all group",
+                    "flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all duration-300 group relative overflow-hidden",
                     isActive 
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" 
-                      : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white"
+                      : "text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5"
                   )}
                 >
-                  <Icon className={cn("h-5 w-5 transition-colors", isActive ? "text-white" : "text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white")} />
-                  {item.name}
+                  <Icon className={cn("h-5 w-5 transition-transform duration-300", isActive ? "scale-110" : "group-hover:scale-110")} />
+                  <span className="uppercase tracking-widest text-[11px]">{item.name}</span>
+                  {isActive && (
+                    <motion.div 
+                      layoutId="activeNav"
+                      className="absolute left-0 w-1 h-6 bg-indigo-600 rounded-full"
+                    />
+                  )}
                 </button>
               );
             })}
           </nav>
 
-          <div className="px-4 mt-auto">
-            <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-700 p-4 text-white shadow-xl shadow-indigo-600/20">
-              <p className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1">Plan Actuel</p>
-              <p className="text-sm font-bold mb-3">{isPro ? 'Plan Professionnel' : 'Version Gratuite'}</p>
-            </div>
+          <div className="px-6 mt-auto">
+            <button 
+              onClick={() => setActiveTab('pricing')}
+              className="w-full text-left rounded-[2rem] bg-gradient-to-br from-indigo-600 to-indigo-700 p-6 text-white shadow-2xl relative overflow-hidden group transition-transform hover:scale-[1.02]"
+            >
+              <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 blur-2xl rounded-full group-hover:scale-150 transition-transform duration-700" />
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70 mb-2">CURRENT PLAN</p>
+              <p className="text-lg font-black uppercase tracking-tight">{isPro ? 'Professional Plan' : 'Free Version'}</p>
+              {!isPro && (
+                <div className="mt-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest bg-white/20 w-fit px-3 py-1.5 rounded-lg">
+                  Améliorer <ArrowRight className="h-3 w-3" />
+                </div>
+              )}
+            </button>
           </div>
         </div>
       </div>
 
       {/* Main content */}
       <div className="flex flex-1 flex-col overflow-hidden relative">
-        <div className="absolute inset-0 bg-grid-slate-100 dark:bg-grid-slate-900 pointer-events-none opacity-50" />
-        
-        <header className="flex h-16 items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-[#0f1115]/80 backdrop-blur-md px-4 lg:px-8 z-10">
+        <header className="flex h-24 items-center justify-between border-b border-slate-100 dark:border-white/5 bg-white/80 dark:bg-[#050505]/80 backdrop-blur-xl px-8 lg:px-12 z-30">
           <button
-            className="text-slate-500 hover:text-slate-700 lg:hidden"
+            className="text-slate-400 hover:text-slate-900 dark:hover:text-white lg:hidden"
             onClick={() => setIsMobileMenuOpen(true)}
           >
-            <Menu className="h-6 w-6" />
+            <Menu className="h-7 w-7" />
           </button>
           
           <div className="flex flex-1 justify-end">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-6">
               {user ? (
                 <div className="relative">
                   <button 
                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                    className="flex items-center gap-3 group text-left"
+                    className="flex items-center gap-4 group"
                   >
                     <div className="text-right hidden sm:block">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white leading-none mb-1 group-hover:text-indigo-600 transition-colors">
+                      <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight group-hover:text-indigo-600 transition-colors">
                         {user.displayName || 'Utilisateur'}
                       </p>
-                      <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                        {isPro ? 'Membre Pro' : 'Membre Gratuit'}
+                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">
+                        {isPro ? 'Elite Member' : 'Standard'}
                       </p>
                     </div>
-                    {user.photoURL ? (
-                      <img 
-                        src={user.photoURL} 
-                        alt="Profile" 
-                        referrerPolicy="no-referrer"
-                        className="h-10 w-10 rounded-xl shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform"
-                      />
-                    ) : (
-                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform overflow-hidden">
-                        {user.displayName?.charAt(0) || 'U'}
-                      </div>
-                    )}
+                    <div className="relative">
+                      {user.photoURL ? (
+                        <img 
+                          src={user.photoURL} 
+                          alt="Profile" 
+                          referrerPolicy="no-referrer"
+                          className="h-12 w-12 rounded-2xl shadow-2xl group-hover:scale-105 transition-transform duration-500 object-cover border-2 border-transparent group-hover:border-indigo-600"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-2xl bg-slate-900 dark:bg-white flex items-center justify-center text-white dark:text-black font-black shadow-2xl group-hover:scale-105 transition-transform">
+                          {user.displayName?.charAt(0) || 'U'}
+                        </div>
+                      )}
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-[#050505] rounded-full" />
+                    </div>
                   </button>
                   
                   {isProfileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-[#1a1b20] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 py-2 z-50">
-                      <button onClick={() => {setActiveTab('profile'); setIsProfileMenuOpen(false);}} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors">
-                        <User className="h-4 w-4" /> Mon Profil
-                      </button>
-                      <button onClick={() => {setActiveTab('pricing'); setIsProfileMenuOpen(false);}} className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors">
-                        <CreditCard className="h-4 w-4" /> Tarifs
-                      </button>
-                      <div className="border-t border-slate-200 dark:border-slate-800 my-1"></div>
-                      <button 
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
-                      >
-                        <LogOut className="h-4 w-4" /> Déconnexion
-                      </button>
-                    </div>
+                    <motion.div 
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      className="absolute right-0 mt-4 w-64 bg-white dark:bg-[#111] rounded-[2rem] shadow-2xl border border-slate-100 dark:border-white/5 p-4 z-50"
+                    >
+                      <div className="px-4 py-3 mb-2">
+                        <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Compte</p>
+                        <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.email}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <button onClick={() => {setActiveTab('profile'); setIsProfileMenuOpen(false);}} className="w-full text-left px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl flex items-center gap-3 transition-all">
+                          <User className="h-4 w-4" /> Profil
+                        </button>
+                        <button onClick={() => {setActiveTab('pricing'); setIsProfileMenuOpen(false);}} className="w-full text-left px-4 py-3 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 rounded-xl flex items-center gap-3 transition-all">
+                          <Crown className="h-4 w-4" /> Améliorer
+                        </button>
+                        <div className="h-px bg-slate-100 dark:bg-white/5 my-2 mx-4"></div>
+                        <button 
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-3 text-[11px] font-black uppercase tracking-widest text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-xl flex items-center gap-3 transition-all"
+                        >
+                          <LogOut className="h-4 w-4" /> Déconnexion
+                        </button>
+                      </div>
+                    </motion.div>
                   )}
                 </div>
               ) : (
                 <button 
                   onClick={handleLogin}
-                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-indigo-600/20"
+                  className="px-8 py-3.5 bg-slate-900 dark:bg-white text-white dark:text-black text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:scale-105 transition-all shadow-2xl"
                 >
-                  <LogIn className="h-4 w-4" /> Connexion
+                  Connexion
                 </button>
               )}
             </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8 z-0 animate-in fade-in duration-500">
-          <div className="mx-auto max-w-7xl">
+        <main className="flex-1 overflow-y-auto p-8 lg:p-16 z-0">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mx-auto max-w-7xl"
+          >
             {children}
-          </div>
+          </motion.div>
         </main>
       </div>
     </div>

@@ -32,7 +32,7 @@ interface FirestoreErrorInfo {
   }
 }
 
-import { cn } from './Layout';
+import { cn } from '../lib/utils';
 
 export function SettingsView() {
   console.log("SettingsView rendering...");

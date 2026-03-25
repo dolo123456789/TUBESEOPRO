@@ -89,8 +89,8 @@ export function GrowthSimulatorView({ setActiveTab }: { setActiveTab: (tab: stri
                     <AreaChart data={simulationData}>
                       <defs>
                         <linearGradient id="colorSubs" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" className="dark:stroke-slate-800" />
@@ -100,7 +100,7 @@ export function GrowthSimulatorView({ setActiveTab }: { setActiveTab: (tab: stri
                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', backgroundColor: '#1e293b', color: '#fff' }}
                         itemStyle={{ color: '#fff' }}
                       />
-                      <Area type="monotone" dataKey="subscribers" stroke="#6366f1" fillOpacity={1} fill="url(#colorSubs)" />
+                      <Area type="monotone" dataKey="subscribers" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorSubs)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>

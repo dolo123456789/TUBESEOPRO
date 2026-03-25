@@ -12,7 +12,7 @@ export function VideoAnalyzerView({ setActiveTab }: { setActiveTab: (tab: string
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
   const [data, setData] = useState<any>(null);
-  const [thumbnailUrl, setThumbnailUrl] = useState<{ horizontal: string, vertical: string } | null>(null);
+  const [thumbnailUrl, setThumbnailUrl] = useState<{ horizontals: string[], vertical: string | null } | null>(null);
   const [referenceImage, setReferenceImage] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -212,7 +212,7 @@ export function VideoAnalyzerView({ setActiveTab }: { setActiveTab: (tab: string
                       d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     />
                     <path
-                      className={data.seo_score >= 80 ? "text-emerald-500" : data.seo_score >= 50 ? "text-amber-500" : "text-red-500"}
+                      className={data.seo_score >= 80 ? "text-emerald-500" : data.seo_score >= 50 ? "text-amber-500" : "text-indigo-500"}
                       strokeDasharray={`${data.seo_score}, 100`}
                       strokeWidth="3"
                       strokeLinecap="round"
@@ -314,7 +314,7 @@ export function VideoAnalyzerView({ setActiveTab }: { setActiveTab: (tab: string
                 </div>
                 <div className="text-right">
                   <p className="text-amber-700 dark:text-amber-500 font-bold mb-1">Tendance de recherche</p>
-                  <p className={`text-xl font-bold capitalize ${data.trend === 'Up' ? 'text-emerald-500' : data.trend === 'Down' ? 'text-red-500' : 'text-slate-900 dark:text-white'}`}>
+                  <p className={`text-xl font-bold capitalize ${data.trend === 'Up' ? 'text-emerald-500' : data.trend === 'Down' ? 'text-indigo-500' : 'text-slate-900 dark:text-white'}`}>
                     {data.trend}
                   </p>
                 </div>
@@ -364,7 +364,7 @@ export function VideoAnalyzerView({ setActiveTab }: { setActiveTab: (tab: string
                     {referenceImage && (
                       <button 
                         onClick={() => setReferenceImage(null)}
-                        className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                        className="p-2 text-slate-400 hover:text-indigo-500 transition-colors"
                         title="Supprimer l'image de référence"
                       >
                         <X className="h-5 w-5" />
@@ -382,60 +382,66 @@ export function VideoAnalyzerView({ setActiveTab }: { setActiveTab: (tab: string
                   <div className="space-y-6">
                     <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Résultats générés</p>
                     
-                    <div className="grid gap-6 md:grid-cols-2">
-                      {/* 16:9 Thumbnail */}
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Format Standard (16:9)</p>
-                        <div className="relative aspect-video rounded-lg overflow-hidden border-2 border-indigo-500 shadow-xl group">
-                          <img src={thumbnailUrl.horizontal} alt="Miniature générée 16:9" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
-                            <button 
-                              onClick={() => window.open(thumbnailUrl.horizontal, '_blank')}
-                              className="bg-white text-slate-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-slate-100 transition-colors"
-                            >
-                              Aperçu
-                            </button>
-                            <button 
-                              onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = thumbnailUrl.horizontal;
-                                link.download = `thumbnail-16x9-${Date.now()}.png`;
-                                link.click();
-                              }}
-                              className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-indigo-500 transition-colors"
-                            >
-                              Télécharger
-                            </button>
-                          </div>
+                    <div className="grid gap-6">
+                      {/* 16:9 Thumbnails */}
+                      <div className="space-y-4">
+                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Format Standard (16:9) - 3 exemples</p>
+                        <div className="grid gap-4 sm:grid-cols-3">
+                          {thumbnailUrl.horizontals.map((url, i) => (
+                            <div key={i} className="relative aspect-video rounded-lg overflow-hidden border-2 border-indigo-500 shadow-xl group">
+                              <img src={url} alt={`Miniature générée 16:9 - ${i + 1}`} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                                <button 
+                                  onClick={() => window.open(url, '_blank')}
+                                  className="bg-white text-slate-900 px-3 py-1.5 rounded-full text-xs font-bold shadow-lg hover:bg-slate-100 transition-colors"
+                                >
+                                  Aperçu
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = url;
+                                    link.download = `thumbnail-16x9-${i + 1}-${Date.now()}.png`;
+                                    link.click();
+                                  }}
+                                  className="bg-indigo-600 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg hover:bg-indigo-500 transition-colors"
+                                >
+                                  Télécharger
+                                </button>
+                              </div>
+                            </div>
+                          ))}
                         </div>
                       </div>
 
                       {/* 9:16 Thumbnail */}
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Format Short (9:16)</p>
-                        <div className="relative aspect-[9/16] w-full max-w-[240px] mx-auto rounded-lg overflow-hidden border-2 border-indigo-500 shadow-xl group">
-                          <img src={thumbnailUrl.vertical} alt="Miniature générée 9:16" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
-                            <button 
-                              onClick={() => window.open(thumbnailUrl.vertical, '_blank')}
-                              className="bg-white text-slate-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-slate-100 transition-colors"
-                            >
-                              Aperçu
-                            </button>
-                            <button 
-                              onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = thumbnailUrl.vertical;
-                                link.download = `thumbnail-9x16-${Date.now()}.png`;
-                                link.click();
-                              }}
-                              className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-indigo-500 transition-colors"
-                            >
-                              Télécharger
-                            </button>
+                      {thumbnailUrl.vertical && (
+                        <div className="space-y-4">
+                          <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Format Short (9:16) - 1 exemple</p>
+                          <div className="relative aspect-[9/16] w-full max-w-[200px] rounded-lg overflow-hidden border-2 border-indigo-500 shadow-xl group">
+                            <img src={thumbnailUrl.vertical} alt="Miniature générée 9:16" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4">
+                              <button 
+                                onClick={() => window.open(thumbnailUrl.vertical!, '_blank')}
+                                className="bg-white text-slate-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-slate-100 transition-colors"
+                              >
+                                Aperçu
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  const link = document.createElement('a');
+                                  link.href = thumbnailUrl.vertical!;
+                                  link.download = `thumbnail-9x16-${Date.now()}.png`;
+                                  link.click();
+                                }}
+                                className="bg-indigo-600 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg hover:bg-indigo-500 transition-colors"
+                              >
+                                Télécharger
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 )}

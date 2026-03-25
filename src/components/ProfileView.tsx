@@ -166,7 +166,7 @@ export function ProfileView() {
         <div className="space-y-6">
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1a1b20] p-6 shadow-sm text-center">
             <div className="relative inline-block mb-4">
-              <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-3xl text-white font-bold shadow-xl shadow-indigo-500/20 mx-auto overflow-hidden">
+              <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-3xl text-white font-bold shadow-xl shadow-indigo-500/20 mx-auto overflow-hidden">
                 {isUploading ? (
                   <Loader2 className="h-8 w-8 animate-spin" />
                 ) : photoURL ? (

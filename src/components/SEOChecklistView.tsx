@@ -175,7 +175,7 @@ export function SEOChecklistView({ setActiveTab }: { setActiveTab: (tab: string)
                           {item.text}
                         </h3>
                         {item.priority === 'high' && !checkedItems.includes(item.id) && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 uppercase">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400 uppercase">
                             Crucial
                           </span>
                         )}
@@ -225,7 +225,7 @@ export function SEOChecklistView({ setActiveTab }: { setActiveTab: (tab: string)
                 setCheckedItems([]);
                 localStorage.removeItem('tubeseo_checklist');
               }}
-              className="mt-6 text-xs font-medium text-slate-400 hover:text-red-500 transition-colors underline underline-offset-4"
+              className="mt-6 text-xs font-medium text-slate-400 hover:text-indigo-500 transition-colors underline underline-offset-4"
             >
               Réinitialiser la checklist
             </button>

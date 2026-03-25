@@ -169,45 +169,65 @@ Prompt: ${prompt}`;
       }
     };
 
-    // Generate 16:9 thumbnail
-    const response169 = await generateWithRetry('gemini-2.5-flash-image', {
-      imageConfig: {
-        aspectRatio: "16:9",
-        imageSize: "1K"
-      }
-    }, parts);
+    // For Video Analyzer, we want 3 horizontals and 1 vertical
+    // For Political Predictions (mode === 'double_16_9'), we might want something else, 
+    // but let's stick to the user's specific request for Video Analyzer.
+    
+    const horizontalCount = mode === 'double_16_9' ? 2 : 3;
+    const verticalCount = mode === 'mixed' ? 1 : 0;
 
-    // Generate second thumbnail (either 9:16 or another 16:9)
-    const secondAspectRatio = mode === 'double_16_9' ? '16:9' : '9:16';
-    const responseSecond = await generateWithRetry('gemini-2.5-flash-image', {
-      imageConfig: {
-        aspectRatio: secondAspectRatio,
-        imageSize: "1K"
-      }
-    }, parts);
+    const horizontalPromises = Array.from({ length: horizontalCount }).map(() => 
+      generateWithRetry('gemini-2.5-flash-image', {
+        imageConfig: {
+          aspectRatio: "16:9",
+          imageSize: "1K"
+        }
+      }, parts)
+    );
 
-    let horizontal = '';
-    let vertical = '';
+    const verticalPromises = Array.from({ length: verticalCount }).map(() => 
+      generateWithRetry('gemini-2.5-flash-image', {
+        imageConfig: {
+          aspectRatio: "9:16",
+          imageSize: "1K"
+        }
+      }, parts)
+    );
 
-    for (const part of response169.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        horizontal = `data:image/png;base64,${part.inlineData.data}`;
-        break;
+    const [horizontalResponses, verticalResponses] = await Promise.all([
+      Promise.all(horizontalPromises),
+      Promise.all(verticalPromises)
+    ]);
+
+    const horizontals: string[] = [];
+    const verticals: string[] = [];
+
+    for (const resp of horizontalResponses) {
+      for (const part of resp.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) {
+          horizontals.push(`data:image/png;base64,${part.inlineData.data}`);
+          break;
+        }
       }
     }
 
-    for (const part of responseSecond.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        vertical = `data:image/png;base64,${part.inlineData.data}`;
-        break;
+    for (const resp of verticalResponses) {
+      for (const part of resp.candidates?.[0]?.content?.parts || []) {
+        if (part.inlineData) {
+          verticals.push(`data:image/png;base64,${part.inlineData.data}`);
+          break;
+        }
       }
     }
 
-    if (!horizontal || !vertical) {
-      throw new Error('Failed to generate both images');
+    if (horizontals.length === 0) {
+      throw new Error('Failed to generate horizontal images');
     }
 
-    return { horizontal, vertical };
+    return { 
+      horizontals, 
+      vertical: verticals[0] || null 
+    };
   } catch (error) {
     console.error("Error in generateThumbnail:", error);
     throw error;

@@ -3,7 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { TrendingUp, Users, Search, Video, Eye, MousePointerClick, Tag, X, CheckCircle2, AlertCircle, PieChart, Activity, Info, Loader2, History, Gavel, ArrowRight, Download, Zap, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleGenAI } from "@google/genai";
-import { cn } from './Layout';
+import { cn } from '../lib/utils';
 import { ai, fetchPoliticalPredictions } from '../services/geminiService';
 import { useProMode } from '../context/ProModeContext';
 
@@ -251,7 +251,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
     { name: 'Score', value: 84 },
     { name: 'Restant', value: 16 },
   ];
-  const COLORS = ['#6366f1', '#e2e8f0'];
+  const COLORS = ['#4f46e5', '#e2e8f0'];
 
   return (
     <motion.div 
@@ -306,7 +306,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
           { title: 'Vues Totales', value: timeRange === '7' ? '2.4M' : '10.2M', icon: Video, trend: '+12.5%', color: 'indigo' },
           { title: 'Abonnés', value: timeRange === '7' ? '142K' : '158K', icon: Users, trend: '+4.2%', color: 'emerald' },
           { title: 'Score SEO Moyen', value: '84/100', icon: Search, trend: '+2.1%', color: 'amber' },
-          { title: 'Potentiel Viral', value: 'Élevé', icon: TrendingUp, trend: 'Stable', color: 'violet' },
+          { title: 'Potentiel Viral', value: 'Élevé', icon: TrendingUp, trend: 'Stable', color: 'purple' },
         ].map((stat) => (
           <motion.div 
             variants={itemVariants}
@@ -320,7 +320,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
               stat.color === 'indigo' ? 'bg-indigo-500/5 group-hover:bg-indigo-500/10' :
               stat.color === 'emerald' ? 'bg-emerald-500/5 group-hover:bg-emerald-500/10' :
               stat.color === 'amber' ? 'bg-amber-500/5 group-hover:bg-amber-500/10' :
-              'bg-violet-500/5 group-hover:bg-violet-500/10'
+              'bg-purple-500/5 group-hover:bg-purple-500/10'
             )} />
             
             <div className="flex items-center justify-between mb-4">
@@ -328,7 +328,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                 stat.color === 'indigo' ? 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400' :
                 stat.color === 'emerald' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' :
                 stat.color === 'amber' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
-                'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                'bg-purple-500/10 text-purple-600 dark:text-purple-400'
               )}>
                 <stat.icon className="h-5 w-5" />
               </div>
@@ -361,7 +361,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                   <span className="text-xs font-medium text-slate-500">Vues</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-violet-500" />
+                  <div className="h-3 w-3 rounded-full bg-purple-500" />
                   <span className="text-xs font-medium text-slate-500">Abonnés</span>
                 </div>
               </div>
@@ -406,8 +406,8 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                       return null;
                     }}
                   />
-                  <Bar dataKey="views" name="Vues" fill="#6366f1" radius={[6, 6, 0, 0]} barSize={timeRange === '7' ? 32 : 64} />
-                  <Bar dataKey="subs" name="Abonnés" fill="#8b5cf6" radius={[6, 6, 0, 0]} barSize={timeRange === '7' ? 32 : 64} />
+                  <Bar dataKey="views" name="Vues" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={timeRange === '7' ? 32 : 64} />
+                  <Bar dataKey="subs" name="Abonnés" fill="#6366f1" radius={[6, 6, 0, 0]} barSize={timeRange === '7' ? 32 : 64} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -442,7 +442,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
             </motion.div>
 
             {isPro && (
-              <motion.div variants={itemVariants} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-indigo-600 to-violet-700 p-6 shadow-lg shadow-indigo-600/20 text-white relative overflow-hidden">
+              <motion.div variants={itemVariants} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-indigo-600 to-indigo-700 p-6 shadow-lg shadow-indigo-600/20 text-white relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-2 opacity-10">
                   <Zap className="h-24 w-24" />
                 </div>
@@ -555,7 +555,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                       <div className={`h-2 w-2 rounded-full ${
                         video.score >= 85 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' :
                         video.score >= 70 ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' :
-                        'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]'
+                        'bg-indigo-500 shadow-[0_0_8px_rgba(79,70,229,0.5)]'
                       }`} />
                     </div>
                     <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mt-0.5">{video.status}</span>
@@ -601,7 +601,7 @@ export function DashboardView({ setActiveTab }: { setActiveTab: (tab: string) =>
                   <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
                     selectedAnalysis.score >= 85 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400' :
                     selectedAnalysis.score >= 70 ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400' :
-                    'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400'
+                    'bg-indigo-100 text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-400'
                   }`}>
                     Score: {selectedAnalysis.score}/100
                   </span>

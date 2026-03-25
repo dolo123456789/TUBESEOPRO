@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Check, Crown, Zap, Shield, Star, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
 import { useProMode } from '../context/ProModeContext';
-import { cn } from './Layout';
+import { cn } from '../lib/utils';
 import { auth } from '../firebase';
 import { Toast } from './Toast';
 
@@ -137,7 +137,7 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
         </div>
       )}
       {paymentStatus === 'error' && (
-        <div className="bg-red-100 border border-red-200 text-red-800 px-6 py-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+        <div className="bg-indigo-100 border border-indigo-200 text-indigo-800 px-6 py-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
           <Shield className="h-6 w-6" />
           <p className="font-bold">Désolé, une erreur est survenue lors de votre paiement. Veuillez réessayer.</p>
         </div>
@@ -158,7 +158,7 @@ export function PricingView({ setActiveTab }: { setActiveTab: (tab: string) => v
       </button>
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
-          Choisissez le plan qui vous fera <span className="text-red-600">décoller</span>
+          Choisissez le plan qui vous fera <span className="text-indigo-600">décoller</span>
         </h1>
         
         {auth.currentUser?.email && ['adamadiop709@gmail.com', 'adjisanoudolo1@gmail.com', 'infosportmedia7@gmail.com'].includes(auth.currentUser.email) && !isPro && (

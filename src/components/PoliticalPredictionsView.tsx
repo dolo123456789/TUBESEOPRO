@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { fetchPoliticalPredictions, generateThumbnail } from '../services/geminiService';
 import { ProGatedView } from './ProGatedView';
-import { cn } from './Layout';
+import { cn } from '../lib/utils';
 
 interface Prediction {
   category: string;
@@ -45,7 +45,7 @@ const PredictionCard = React.memo(({ prediction }: { prediction: Prediction }) =
   const [shared, setShared] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isGeneratingThumbnail, setIsGeneratingThumbnail] = useState(false);
-  const [thumbnailUrls, setThumbnailUrls] = useState<{ horizontal: string; vertical: string } | null>(null);
+  const [thumbnailUrls, setThumbnailUrls] = useState<{ horizontals: string[]; vertical: string | null } | null>(null);
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -106,7 +106,7 @@ const PredictionCard = React.memo(({ prediction }: { prediction: Prediction }) =
       <div className="p-6 flex-grow">
         <div className="flex justify-between items-start mb-6">
           <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2 px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-red-100 dark:border-red-900/30 w-fit">
+            <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100 dark:border-indigo-900/30 w-fit">
               <Zap className="h-3 w-3 fill-current" />
               Alerte Stratégique
             </div>
@@ -242,62 +242,37 @@ const PredictionCard = React.memo(({ prediction }: { prediction: Prediction }) =
                   <p className="text-[10px] text-indigo-600 dark:text-indigo-400 uppercase font-black tracking-widest flex items-center gap-1.5">
                     <ImageIcon className="h-3 w-3" /> Miniatures Générées
                   </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="relative group/img rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video bg-slate-100 dark:bg-slate-800">
-                      <img 
-                        src={thumbnailUrls.horizontal} 
-                        alt="Miniature 16:9 Option 1" 
-                        className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <button 
-                          onClick={() => downloadImage(thumbnailUrls.horizontal, `thumbnail_16_9_opt1_${prediction.title}.png`)}
-                          className="p-2 bg-white rounded-full text-slate-900 hover:scale-110 transition-transform"
-                          title="Télécharger"
-                        >
-                          <Download className="h-4 w-4" />
-                        </button>
-                        <a 
-                          href={thumbnailUrls.horizontal} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="p-2 bg-white rounded-full text-slate-900 hover:scale-110 transition-transform"
-                          title="Voir en plein écran"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </a>
-                      </div>
-                      <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/50 backdrop-blur-md text-white text-[8px] font-bold rounded uppercase">Option 1 (16:9)</div>
+                    <div className="grid grid-cols-2 gap-3">
+                      {thumbnailUrls.horizontals.map((url, i) => (
+                        <div key={i} className="relative group/img rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video bg-slate-100 dark:bg-slate-800">
+                          <img 
+                            src={url} 
+                            alt={`Miniature 16:9 Option ${i + 1}`} 
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <button 
+                              onClick={() => downloadImage(url, `thumbnail_16_9_opt${i + 1}_${prediction.title}.png`)}
+                              className="p-2 bg-white rounded-full text-slate-900 hover:scale-110 transition-transform"
+                              title="Télécharger"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                            <a 
+                              href={url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="p-2 bg-white rounded-full text-slate-900 hover:scale-110 transition-transform"
+                              title="Voir en plein écran"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </a>
+                          </div>
+                          <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/50 backdrop-blur-md text-white text-[8px] font-bold rounded uppercase">Option {i + 1} (16:9)</div>
+                        </div>
+                      ))}
                     </div>
-                    <div className="relative group/img rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 aspect-video bg-slate-100 dark:bg-slate-800">
-                      <img 
-                        src={thumbnailUrls.vertical} 
-                        alt="Miniature 16:9 Option 2" 
-                        className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                        <button 
-                          onClick={() => downloadImage(thumbnailUrls.vertical, `thumbnail_16_9_opt2_${prediction.title}.png`)}
-                          className="p-2 bg-white rounded-full text-slate-900 hover:scale-110 transition-transform"
-                          title="Télécharger"
-                        >
-                          <Download className="h-4 w-4" />
-                        </button>
-                        <a 
-                          href={thumbnailUrls.vertical} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="p-2 bg-white rounded-full text-slate-900 hover:scale-110 transition-transform"
-                          title="Voir en plein écran"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </a>
-                      </div>
-                      <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-black/50 backdrop-blur-md text-white text-[8px] font-bold rounded uppercase">Option 2 (16:9)</div>
-                    </div>
-                  </div>
                 </div>
               )}
 
@@ -383,7 +358,7 @@ export function PoliticalPredictionsView({ setActiveTab }: { setActiveTab: (tab:
             <span>Analyse Stratégique Sénégal</span>
           </div>
           <h1 className="text-4xl font-black tracking-tight text-slate-900 dark:text-white mb-4">
-            Prédictions <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-amber-500">Politiques Sénégal</span>
+            Prédictions <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-500">Politiques Sénégal</span>
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400">
             Anticipez les prochains séismes politiques au Sénégal pour créer du contenu viral. Analyses basées sur les tendances actuelles et les rapports de force.
@@ -408,7 +383,7 @@ export function PoliticalPredictionsView({ setActiveTab }: { setActiveTab: (tab:
       </div>
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30 p-6 rounded-2xl flex items-center gap-4 text-red-700 dark:text-red-400">
+        <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-900/30 p-6 rounded-2xl flex items-center gap-4 text-indigo-700 dark:text-indigo-400">
           <AlertCircle className="h-6 w-6 flex-shrink-0" />
           <p className="font-medium">{error}</p>
         </div>

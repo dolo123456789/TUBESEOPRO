@@ -52,7 +52,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
       return (
         <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Oups ! Une erreur est survenue.</h1>
+            <h1 className="text-2xl font-bold text-indigo-600 mb-4">Oups ! Une erreur est survenue.</h1>
             <p className="text-slate-600 mb-6">L'application a rencontré un problème inattendu. Veuillez rafraîchir la page.</p>
             <div className="bg-slate-100 p-4 rounded-xl overflow-auto max-h-48 mb-6">
               <code className="text-xs text-slate-800">{this.state.error?.toString()}</code>
